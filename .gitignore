@@ -1,0 +1,8 @@
+objects/*
+*.swp
+compile_commands.json
+codingame_sync_file
+compiled
+sample
+.gdb_history
+.nfs*
