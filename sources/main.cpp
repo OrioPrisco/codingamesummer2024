@@ -98,30 +98,43 @@ struct RunnerGame {
 		// if hedge in front jump
 		if (field.data[my_pos + 1] == '#')
 		{
-			out[UP] = 3;
+			out[UP] = 2;
+			out[DOWN] = -4;
+			out[LEFT] = -4;
+			out[RIGHT] = -4;
 			return out;
 		}
 		else
 			out[LEFT] = 1;
 		if (to_check == 1)
-			return out;
-
+		{
+			return ANY_OUT;
+		}
 		if (field.data[my_pos + 1] != '#'
 		 && field.data[my_pos + 2] != '#')
 		{
-			out[DOWN] = 1;
-			out[UP] = 1;
+			out[DOWN] = 2;
+			out[UP] = 2;
 			//std::cerr << "2 tiles are clear" << std::endl;
 		}
-		if (to_check == 2)
+		else
+		{
+			out[DOWN] = -4;
+			out[UP] = -4;
+		}
+		if (to_check == 2) {
+			out[RIGHT] = out[DOWN];
 			return out;
+		}
 		if (field.data[my_pos + 1] != '#'
 		 && field.data[my_pos + 2] != '#'
 		 && field.data[my_pos + 3] != '#')
 		{
-			out[RIGHT] = 1;
+			out[RIGHT] = 3;
 			//std::cerr << "Coast is clear" << std::endl;
 		}
+		else
+			out[RIGHT] = -4;
 
 		return out;
 	}
