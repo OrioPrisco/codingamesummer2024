@@ -29,16 +29,12 @@ public:
 	int reg_4;
 	int reg_5;
 	int reg_6;
-	int turn = -1;
 	Medals medals[3];
 	int simulated_turns = 0;
 
 	void update_state() {
 		std::cin >> gpu >> reg_0 >> reg_1 >> reg_2 >> reg_3 >> reg_4 >> reg_5 >> reg_6; std::cin.ignore();
 		simulated_turns = 0;
-		turn++;
-		if (gpu == "GAME_OVER")
-			turn = -1;
 	}
 
 	void simulateTurn(Key inputs[3]) {
@@ -230,7 +226,7 @@ public:
 	}
 	void divingDoPlayer(int& score, int& combo, Key key) {
 		char gpu_key = "UDLR"[key];
-		if (gpu[turn] == gpu_key) {
+		if (gpu[0] == gpu_key) {
 			combo++;
 			score += combo;
 		} else {
@@ -243,13 +239,10 @@ public:
 		divingDoPlayer(reg_0, reg_3, inputs[0]);
 		divingDoPlayer(reg_1, reg_4, inputs[1]);
 		divingDoPlayer(reg_2, reg_5, inputs[2]);
-		if ((unsigned long)turn == gpu.size()) {
+		if (gpu.empty()) {
 			gpu = "GAME_OVER";
 			int scores[3] = {reg_0, reg_1, reg_2};
 			grant_medals(scores);
-			turn = -1;
-		} else {
-			turn++;
 		}
 	}
 	double evaluate(int player);
