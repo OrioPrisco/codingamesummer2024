@@ -187,12 +187,12 @@ public:
 		skaterDoPlayer2(reg_3, shares_space[0]);
 		skaterDoPlayer2(reg_4, shares_space[1]);
 		skaterDoPlayer2(reg_5, shares_space[2]);
+		reg_6--;
 		if (!reg_6) {
 			int positions[3] = {reg_0, reg_1, reg_2};
 			grant_medals(positions);
 			gpu = "GAME_OVER";
 		}
-		reg_6--;
 	}
 	void archeryDoPlayer(int& x, int& y, Key key) {
 		int wind_force = gpu[0] - '0';
