@@ -245,5 +245,62 @@ public:
 			grant_medals(scores);
 		}
 	}
+	void display_status() {
+		if (gpu == "GAME_OVER") {
+			std::cerr << "GAME_OVER" << std::endl;
+			return ;
+		}
+		switch(type) {
+			case Runner:
+				runner_display();
+				break;
+			case Skater:
+				skater_display();
+				break;
+			case Archery:
+				archery_display();
+				break;
+			case Diving:
+				diving_display();
+				break;
+			default:
+				throw std::runtime_error("unknown type");
+		}
+		simulated_turns++;
+	}
+	void runner_display() {
+		std::string field;
+		field = gpu;
+		field[reg_0] = '@';
+		std::cerr << "{" << reg_1 << "," << reg_4 << "}" << field << std::endl;
+		field = gpu;
+		field[reg_1] = '@';
+		std::cerr << "{" << reg_1 << "," << reg_4 << "}" << field << std::endl;
+		field = gpu;
+		field[reg_2] = '@';
+		std::cerr << "{" << reg_2 << "," << reg_5 << "}" << field << std::endl;
+	}
+	void skater_display() {
+		char field[41] = "   |   |   |   |   |   |   |   |   |   |";
+		field[(reg_0 % 10) * 4 + 0] = '1';
+		field[(reg_1 % 10) * 4 + 1] = '2';
+		field[(reg_2 % 10) * 4 + 2] = '3';
+		std::cerr << field << std::endl;
+		std::cerr << reg_0 << "," << reg_3 << std::endl;
+		std::cerr << reg_1 << "," << reg_4 << std::endl;
+		std::cerr << reg_2 << "," << reg_5 << std::endl;
+	}
+	void archery_display() {
+		std::cerr << reg_0 << "," << reg_1 << std::endl;
+		std::cerr << reg_2 << "," << reg_3 << std::endl;
+		std::cerr << reg_4 << "," << reg_5 << std::endl;
+		std::cerr << gpu << std::endl;
+	}
+	void diving_display() {
+		std::cerr << reg_0 << "," << reg_3 << std::endl;
+		std::cerr << reg_1 << "," << reg_4 << std::endl;
+		std::cerr << reg_2 << "," << reg_5 << std::endl;
+		std::cerr << gpu << std::endl;
+	}
 	double evaluate(int player);
 };
