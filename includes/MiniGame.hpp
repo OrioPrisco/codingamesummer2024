@@ -312,5 +312,60 @@ public:
 		std::cerr << regs[2] << "," << regs[5] << std::endl;
 		std::cerr << gpu << std::endl;
 	}
-	double evaluate(int player);
+	double skaterEvaluate(int player) {
+		if (gpu == "GAME_OVER")
+			return 0; // exact score is known
+		double score_v1 = regs[player] - regs[(player + 1) % 3];
+		double score_v2 = regs[player] - regs[(player + 2) % 3];
+		return std::min(score_v2, score_v1) / 10;
+		// TODO : take stun into account
+		// TODO : take turns into account
+	}
+	double runnerEvaluate(int player) {
+		if (gpu == "GAME_OVER")
+			return 0; // exact score is known
+		double score_v1 = regs[player] - regs[(player + 1) % 3];
+		double score_v2 = regs[player] - regs[(player + 2) % 3];
+		return std::min(score_v2, score_v1) / 10;
+		// TODO : take stun into account
+		// TODO : take dist_left into account
+	}
+	static constexpr int max_archery_dist = 20 * 20;
+	double archeryEvaluate(int player) {
+		if (gpu == "GAME_OVER")
+			return 0; // exact score is known
+		int dists[3] = {
+			max_archery_dist - (regs[0] * regs[0] + regs[1] * regs[1]),
+			max_archery_dist - (regs[2] * regs[2] + regs[3] * regs[3]),
+			max_archery_dist - (regs[4] * regs[4] + regs[5] * regs[5]),
+		};
+		double score_v1 = dists[player] - dists[(player + 1) % 3];
+		double score_v2 = dists[player] - dists[(player + 1) % 3];
+
+		return std::min(score_v1, score_v2) / max_archery_dist;
+		// TODO : take time left into account
+	}
+	double divingEvaluate(int player) {
+		if (gpu == "GAME_OVER")
+			return 0; // exact score is known
+		double score_v1 = regs[player] - regs[(player + 1) % 3];
+		double score_v2 = regs[player] - regs[(player + 2) % 3];
+		return std::min(score_v2, score_v1) / 10;
+		// TODO : take combo into account
+	}
+	double evaluate(int player) {
+		double medal_score = medals[player].silver + medals[player].gold * 3;
+		switch(type) {
+			case Runner:
+				return medal_score + runnerEvaluate(player);
+			case Skater:
+				return medal_score + skaterEvaluate(player);
+			case Archery:
+				return medal_score + archeryEvaluate(player);
+			case Diving:
+				return medal_score + divingEvaluate(player);
+			default:
+				throw std::runtime_error("unknown type");
+		}
+	}
 };
