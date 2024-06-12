@@ -7,6 +7,19 @@
 
 using namespace std;
 
+double evaluate(MiniGame (&games)[4], int player) {
+	//TODO: make evals return triplets, to do less recalculations
+	double scores[3] = {
+		games[0].evaluate(0) * games[1].evaluate(0) * games[2].evaluate(0) * games[3].evaluate(0),
+		games[0].evaluate(1) * games[1].evaluate(1) * games[2].evaluate(1) * games[3].evaluate(1),
+		games[0].evaluate(2) * games[1].evaluate(2) * games[2].evaluate(2) * games[3].evaluate(2),
+	};
+	double score_v1 = scores[player] - scores[(player + 1) % 3];
+	double score_v2 = scores[player] - scores[(player + 2) % 3];
+	return std::min(score_v1, score_v2);
+	//TODO being 2nd is better than beng 3rd no matter the point difference
+}
+
 int main()
 {
 	int player_idx;
@@ -47,8 +60,8 @@ int main()
 			games[i].simulateTurn(keys);
 			games[i].display_status();
 			std::cerr << "===" << std::endl;
-			std::cerr << "score: " << evaluate(games, player_idx);
 		}
+		std::cerr << "score: " << evaluate(games, player_idx) << std::endl;
 		cout << "RIGHT" << endl;
 
 	}
