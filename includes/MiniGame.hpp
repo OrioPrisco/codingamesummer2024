@@ -254,7 +254,7 @@ public:
 			grant_medals(scores);
 		}
 	}
-	void display_status() {
+	void display_status() const {
 		if (gpu == "GAME_OVER") {
 			std::cerr << "GAME_OVER" << std::endl;
 			return ;
@@ -275,9 +275,8 @@ public:
 			default:
 				throw std::runtime_error("unknown type");
 		}
-		simulated_turns++;
 	}
-	void runner_display() {
+	void runner_display() const {
 		std::string field;
 		field = gpu;
 		field[regs[0]] = '@';
@@ -289,7 +288,7 @@ public:
 		field[regs[2]] = '@';
 		std::cerr << "{" << regs[2] << "," << regs[5] << "}" << field << std::endl;
 	}
-	void skater_display() {
+	void skater_display() const {
 		char field[41] = "   |   |   |   |   |   |   |   |   |   |";
 		field[(regs[0] % 10) * 4 + 0] = '1';
 		field[(regs[1] % 10) * 4 + 1] = '2';
@@ -300,19 +299,19 @@ public:
 		std::cerr << regs[2] << "," << regs[5] << std::endl;
 		std::cerr << "turns: " << regs[6] << std::endl;
 	}
-	void archery_display() {
+	void archery_display() const {
 		std::cerr << regs[0] << "," << regs[1] << std::endl;
 		std::cerr << regs[2] << "," << regs[3] << std::endl;
 		std::cerr << regs[4] << "," << regs[5] << std::endl;
 		std::cerr << gpu << std::endl;
 	}
-	void diving_display() {
+	void diving_display() const {
 		std::cerr << regs[0] << "," << regs[3] << std::endl;
 		std::cerr << regs[1] << "," << regs[4] << std::endl;
 		std::cerr << regs[2] << "," << regs[5] << std::endl;
 		std::cerr << gpu << std::endl;
 	}
-	double skaterEvaluate(int player) {
+	double skaterEvaluate(int player) const {
 		if (gpu == "GAME_OVER")
 			return 0; // exact score is known
 		double score_v1 = regs[player] - regs[(player + 1) % 3];
@@ -321,7 +320,7 @@ public:
 		// TODO : take stun into account
 		// TODO : take turns into account
 	}
-	double runnerEvaluate(int player) {
+	double runnerEvaluate(int player) const {
 		if (gpu == "GAME_OVER")
 			return 0; // exact score is known
 		double score_v1 = regs[player] - regs[(player + 1) % 3];
@@ -331,7 +330,7 @@ public:
 		// TODO : take dist_left into account
 	}
 	static constexpr int max_archery_dist = 20 * 20;
-	double archeryEvaluate(int player) {
+	double archeryEvaluate(int player) const {
 		if (gpu == "GAME_OVER")
 			return 0; // exact score is known
 		int dists[3] = {
@@ -345,7 +344,7 @@ public:
 		return std::min(score_v1, score_v2) / max_archery_dist;
 		// TODO : take time left into account
 	}
-	double divingEvaluate(int player) {
+	double divingEvaluate(int player) const {
 		if (gpu == "GAME_OVER")
 			return 0; // exact score is known
 		double score_v1 = regs[player] - regs[(player + 1) % 3];
@@ -353,7 +352,7 @@ public:
 		return std::min(score_v2, score_v1) / 10;
 		// TODO : take combo into account
 	}
-	double evaluate(int player) {
+	double evaluate(int player) const {
 		double medal_score = medals[player].silver + medals[player].gold * 3;
 		switch(type) {
 			case Runner:
