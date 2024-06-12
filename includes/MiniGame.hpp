@@ -22,18 +22,19 @@ class MiniGame {
 public:
 	Type type;
 	std::string gpu;
-	int reg_0;
-	int reg_1;
-	int reg_2;
-	int reg_3;
-	int reg_4;
-	int reg_5;
-	int reg_6;
+	int regs[7];
+//	int reg_0;
+//	int reg_1;
+//	int reg_2;
+//	int reg_3;
+//	int reg_4;
+//	int reg_5;
+//	int reg_6;
 	Medals medals[3];
 	int simulated_turns = 0;
 
 	void update_state() {
-		std::cin >> gpu >> reg_0 >> reg_1 >> reg_2 >> reg_3 >> reg_4 >> reg_5 >> reg_6; std::cin.ignore();
+		std::cin >> gpu >> regs[0] >> regs[1] >> regs[2] >> regs[3] >> regs[4] >> regs[5] >> regs[6]; std::cin.ignore();
 		simulated_turns = 0;
 	}
 
@@ -114,14 +115,14 @@ public:
 		if (gpu == "GAME_OVER")
 			return ;
 		bool done = false;
-		done |= runnerDoPlayer(reg_0, reg_3, inputs[0]);
-		done |= runnerDoPlayer(reg_1, reg_4, inputs[1]);
-		done |= runnerDoPlayer(reg_2, reg_5, inputs[2]);
+		done |= runnerDoPlayer(regs[0], regs[3], inputs[0]);
+		done |= runnerDoPlayer(regs[1], regs[4], inputs[1]);
+		done |= runnerDoPlayer(regs[2], regs[5], inputs[2]);
 		if (done) {
 			int positions[3] = {
-				std::min(FIELD_SIZE - 1, reg_0),
-				std::min(FIELD_SIZE - 1, reg_1),
-				std::min(FIELD_SIZE - 1, reg_2)
+				std::min(FIELD_SIZE - 1, regs[0]),
+				std::min(FIELD_SIZE - 1, regs[1]),
+				std::min(FIELD_SIZE - 1, regs[2])
 			};
 
 			grant_medals(positions);
@@ -165,31 +166,31 @@ public:
 			return ;
 		if (simulated_turns == 1)
 			return ; //Risk is random every turn, unpredictable
-		skaterDoPlayer(reg_0, reg_3, inputs[0]);
-		skaterDoPlayer(reg_1, reg_4, inputs[1]);
-		skaterDoPlayer(reg_2, reg_5, inputs[2]);
+		skaterDoPlayer(regs[0], regs[3], inputs[0]);
+		skaterDoPlayer(regs[1], regs[4], inputs[1]);
+		skaterDoPlayer(regs[2], regs[5], inputs[2]);
 		bool shares_space[3];
-		if (reg_0 % 10 == reg_1 % 10)
+		if (regs[0] % 10 == regs[1] % 10)
 		{
 			shares_space[0] = true;
 			shares_space[1] = true;
 		}
-		if (reg_1 % 10 == reg_2 % 10)
+		if (regs[1] % 10 == regs[2] % 10)
 		{
 			shares_space[1] = true;
 			shares_space[2] = true;
 		}
-		if (reg_0 % 10 == reg_2 % 10)
+		if (regs[0] % 10 == regs[2] % 10)
 		{
 			shares_space[0] = true;
 			shares_space[2] = true;
 		}
-		skaterDoPlayer2(reg_3, shares_space[0]);
-		skaterDoPlayer2(reg_4, shares_space[1]);
-		skaterDoPlayer2(reg_5, shares_space[2]);
-		reg_6--;
-		if (!reg_6) {
-			int positions[3] = {reg_0, reg_1, reg_2};
+		skaterDoPlayer2(regs[3], shares_space[0]);
+		skaterDoPlayer2(regs[4], shares_space[1]);
+		skaterDoPlayer2(regs[5], shares_space[2]);
+		regs[6]--;
+		if (!regs[6]) {
+			int positions[3] = {regs[0], regs[1], regs[2]};
 			grant_medals(positions);
 			gpu = "GAME_OVER";
 		}
@@ -216,17 +217,17 @@ public:
 	void archeryDoTurn(Key inputs[3]) {
 		if (gpu == "GAME_OVER")
 			return ;
-		archeryDoPlayer(reg_0, reg_1, inputs[0]);
-		archeryDoPlayer(reg_2, reg_3, inputs[1]);
-		archeryDoPlayer(reg_4, reg_5, inputs[2]);
+		archeryDoPlayer(regs[0], regs[1], inputs[0]);
+		archeryDoPlayer(regs[2], regs[3], inputs[1]);
+		archeryDoPlayer(regs[4], regs[5], inputs[2]);
 		gpu.erase(0, 1); // remove first char
 		if (gpu.empty())
 		{
 			gpu = "GAME_OVER";
 			int dists[3] = {
-				-(reg_0 * reg_0 + reg_1 * reg_1),
-				-(reg_2 * reg_2 + reg_3 * reg_3),
-				-(reg_4 * reg_4 + reg_5 * reg_5),
+				-(regs[0] * regs[0] + regs[1] * regs[1]),
+				-(regs[2] * regs[2] + regs[3] * regs[3]),
+				-(regs[4] * regs[4] + regs[5] * regs[5]),
 			};
 			grant_medals(dists);
 		}
@@ -243,13 +244,13 @@ public:
 	void divingDoTurn(Key inputs[3]) {
 		if (gpu == "GAME_OVER")
 			return ;
-		divingDoPlayer(reg_0, reg_3, inputs[0]);
-		divingDoPlayer(reg_1, reg_4, inputs[1]);
-		divingDoPlayer(reg_2, reg_5, inputs[2]);
+		divingDoPlayer(regs[0], regs[3], inputs[0]);
+		divingDoPlayer(regs[1], regs[4], inputs[1]);
+		divingDoPlayer(regs[2], regs[5], inputs[2]);
 		gpu.erase(0, 1); // remove first char
 		if (gpu.empty()) {
 			gpu = "GAME_OVER";
-			int scores[3] = {reg_0, reg_1, reg_2};
+			int scores[3] = {regs[0], regs[1], regs[2]};
 			grant_medals(scores);
 		}
 	}
@@ -279,36 +280,36 @@ public:
 	void runner_display() {
 		std::string field;
 		field = gpu;
-		field[reg_0] = '@';
-		std::cerr << "{" << reg_1 << "," << reg_4 << "}" << field << std::endl;
+		field[regs[0]] = '@';
+		std::cerr << "{" << regs[1] << "," << regs[4] << "}" << field << std::endl;
 		field = gpu;
-		field[reg_1] = '@';
-		std::cerr << "{" << reg_1 << "," << reg_4 << "}" << field << std::endl;
+		field[regs[1]] = '@';
+		std::cerr << "{" << regs[1] << "," << regs[4] << "}" << field << std::endl;
 		field = gpu;
-		field[reg_2] = '@';
-		std::cerr << "{" << reg_2 << "," << reg_5 << "}" << field << std::endl;
+		field[regs[2]] = '@';
+		std::cerr << "{" << regs[2] << "," << regs[5] << "}" << field << std::endl;
 	}
 	void skater_display() {
 		char field[41] = "   |   |   |   |   |   |   |   |   |   |";
-		field[(reg_0 % 10) * 4 + 0] = '1';
-		field[(reg_1 % 10) * 4 + 1] = '2';
-		field[(reg_2 % 10) * 4 + 2] = '3';
+		field[(regs[0] % 10) * 4 + 0] = '1';
+		field[(regs[1] % 10) * 4 + 1] = '2';
+		field[(regs[2] % 10) * 4 + 2] = '3';
 		std::cerr << field << std::endl;
-		std::cerr << reg_0 << "," << reg_3 << std::endl;
-		std::cerr << reg_1 << "," << reg_4 << std::endl;
-		std::cerr << reg_2 << "," << reg_5 << std::endl;
-		std::cerr << "turns: " << reg_6 << std::endl;
+		std::cerr << regs[0] << "," << regs[3] << std::endl;
+		std::cerr << regs[1] << "," << regs[4] << std::endl;
+		std::cerr << regs[2] << "," << regs[5] << std::endl;
+		std::cerr << "turns: " << regs[6] << std::endl;
 	}
 	void archery_display() {
-		std::cerr << reg_0 << "," << reg_1 << std::endl;
-		std::cerr << reg_2 << "," << reg_3 << std::endl;
-		std::cerr << reg_4 << "," << reg_5 << std::endl;
+		std::cerr << regs[0] << "," << regs[1] << std::endl;
+		std::cerr << regs[2] << "," << regs[3] << std::endl;
+		std::cerr << regs[4] << "," << regs[5] << std::endl;
 		std::cerr << gpu << std::endl;
 	}
 	void diving_display() {
-		std::cerr << reg_0 << "," << reg_3 << std::endl;
-		std::cerr << reg_1 << "," << reg_4 << std::endl;
-		std::cerr << reg_2 << "," << reg_5 << std::endl;
+		std::cerr << regs[0] << "," << regs[3] << std::endl;
+		std::cerr << regs[1] << "," << regs[4] << std::endl;
+		std::cerr << regs[2] << "," << regs[5] << std::endl;
 		std::cerr << gpu << std::endl;
 	}
 	double evaluate(int player);
