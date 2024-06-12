@@ -3,6 +3,7 @@
 #include <vector>
 #include <algorithm>
 #include "MiniGame.hpp"
+#include <cstdlib>
 
 using namespace std;
 
@@ -19,8 +20,17 @@ int main()
 	games[2].type = Skater;
 	games[3].type = Diving;
 	// game loop
+	std::vector<Key> strategies[10];
+	for (int i = 0; i < 10; i++) {
+		std::vector<Key> current;
+		current.reserve(100);
+		for (int j = 0; j < 100; j++) {
+			current.push_back((Key)(rand()%4));
+		}
+	}
 	int glob_scores[3];
 	while (1) {
+
 		for (int i = 0; i < 3; i++) {
 			cin >> glob_scores[i]
 				>> games[0].medals[i].gold >> games[0].medals[i].silver >> games[0].medals[i].bronze
