@@ -155,6 +155,8 @@ public:
 		}
 	}
 	void skaterDoTurn(Key inputs[3]) {
+		if (gpu == "GAME_OVER")
+			return ;
 		if (simulated_turns == 1)
 			return ; //Risk is random every turn, unpredictable
 		skaterDoPlayer(reg_0, reg_3, inputs[0]);
@@ -189,7 +191,66 @@ public:
 		}
 		reg_6--;
 	}
-	void archeryDoTurn(Key inputs[3]);
-	void divingDoTurn(Key inputs[3]);
+	void archeryDoPlayer(int& x, int& y, Key key) {
+		int wind_force = gpu[0] - '0';
+		if (key == UP)
+			y -= wind_force;
+		else if (key == DOWN)
+			y += wind_force;
+		else if (key == RIGHT)
+			x += wind_force;
+		else if (key == LEFT)
+			x -= wind_force;
+		if (x > 20)
+			x = 20;
+		if (y > 20)
+			y = 20;
+		if (x < -20)
+			x = -20;
+		if (y < -20)
+			y = -20;
+	}
+	void archeryDoTurn(Key inputs[3]) {
+		if (gpu == "GAME_OVER")
+			return ;
+		archeryDoPlayer(reg_0, reg_1, inputs[0]);
+		archeryDoPlayer(reg_2, reg_3, inputs[1]);
+		archeryDoPlayer(reg_4, reg_5, inputs[2]);
+		gpu.erase(0, 1); // remove first char
+		if (gpu.empty())
+		{
+			gpu = "GAME_OVER";
+			int dists[3] = {
+				-(reg_0 * reg_0 + reg_1 * reg_1),
+				-(reg_2 * reg_2 + reg_3 * reg_3),
+				-(reg_4 * reg_4 + reg_5 * reg_5),
+			};
+			grant_medals(dists);
+		}
+	}
+	void divingDoPlayer(int& score, int& combo, Key key) {
+		char gpu_key = "UDLR"[key];
+		if (gpu[turn] == gpu_key) {
+			combo++;
+			score += combo;
+		} else {
+			combo = 0;
+		}
+	}
+	void divingDoTurn(Key inputs[3]) {
+		if (gpu == "GAME_OVER")
+			return ;
+		divingDoPlayer(reg_0, reg_3, inputs[0]);
+		divingDoPlayer(reg_1, reg_4, inputs[1]);
+		divingDoPlayer(reg_2, reg_5, inputs[2]);
+		if ((unsigned long)turn == gpu.size()) {
+			gpu = "GAME_OVER";
+			int scores[3] = {reg_0, reg_1, reg_2};
+			grant_medals(scores);
+			turn = -1;
+		} else {
+			turn++;
+		}
+	}
 	double evaluate(int player);
 };
