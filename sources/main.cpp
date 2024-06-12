@@ -19,11 +19,16 @@ int main()
 	games[2].type = Skater;
 	games[3].type = Diving;
 	// game loop
+	int glob_scores[3];
 	while (1) {
 		for (int i = 0; i < 3; i++) {
-			string score_info;
-			getline(cin, score_info);
-			// updates medals in games
+			cin >> glob_scores[i]
+				>> games[0].medals[i].gold >> games[0].medals[i].silver >> games[0].medals[i].bronze
+				>> games[1].medals[i].gold >> games[1].medals[i].silver >> games[1].medals[i].bronze
+				>> games[2].medals[i].gold >> games[2].medals[i].silver >> games[2].medals[i].bronze
+				>> games[3].medals[i].gold >> games[3].medals[i].silver >> games[3].medals[i].bronze
+			;
+			std::cin.ignore();
 		}
 		for (int i = 0; i < 4; i++)
 		{
