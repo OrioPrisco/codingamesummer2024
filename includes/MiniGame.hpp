@@ -131,7 +131,6 @@ public:
 	void skaterDoPlayer(int& pos, int& risk, Key key) {
 		if (risk < 0)
 		{
-			risk++;
 			return ;
 		}
 		char gpu_key = "UDLR"[key];
@@ -149,6 +148,17 @@ public:
 			pos += 3;
 			risk += 2;
 		}
+	}
+	void skaterDoPlayer2(int& risk, bool shares_space) {
+		if (risk < 0)
+		{
+			risk++;
+			return ;
+		}
+		if (shares_space)
+			risk += 2;
+		if (risk >= 5)
+			risk = -2;
 	}
 	void skaterDoTurn(Key inputs[3]) {
 		if (gpu == "GAME_OVER")
@@ -174,12 +184,9 @@ public:
 			shares_space[0] = true;
 			shares_space[2] = true;
 		}
-		if (reg_3 >= 0 && shares_space[0])
-			reg_3 += 2;
-		if (reg_4 >= 0 && shares_space[1])
-			reg_4 += 2;
-		if (reg_5 >= 0 && shares_space[2])
-			reg_5 += 2;
+		skaterDoPlayer2(reg_3, shares_space[0]);
+		skaterDoPlayer2(reg_4, shares_space[1]);
+		skaterDoPlayer2(reg_5, shares_space[2]);
 		if (!reg_6) {
 			int positions[3] = {reg_0, reg_1, reg_2};
 			grant_medals(positions);
@@ -239,6 +246,7 @@ public:
 		divingDoPlayer(reg_0, reg_3, inputs[0]);
 		divingDoPlayer(reg_1, reg_4, inputs[1]);
 		divingDoPlayer(reg_2, reg_5, inputs[2]);
+		gpu.erase(0, 1); // remove first char
 		if (gpu.empty()) {
 			gpu = "GAME_OVER";
 			int scores[3] = {reg_0, reg_1, reg_2};
