@@ -108,7 +108,7 @@ public:
 				pos++;
 		}
 
-		if (pos < 29)
+		if (pos  >= 29)
 			return true;
 		if (gpu[pos] == '#')
 			stun = STUN_DURATION;
