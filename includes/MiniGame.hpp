@@ -356,13 +356,13 @@ public:
 		double medal_score = medals[player].silver + medals[player].gold * 3;
 		switch(type) {
 			case Runner:
-				return medal_score + runnerEvaluate(player);
+				return medal_score + std::max(runnerEvaluate(player), 0.0);
 			case Skater:
-				return medal_score + skaterEvaluate(player);
+				return medal_score + std::max(skaterEvaluate(player), 0.0);
 			case Archery:
-				return medal_score + archeryEvaluate(player);
+				return medal_score + std::max(archeryEvaluate(player), 0.0);
 			case Diving:
-				return medal_score + divingEvaluate(player);
+				return medal_score + std::max(divingEvaluate(player), 0.0);
 			default:
 				throw std::runtime_error("unknown type");
 		}
