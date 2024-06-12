@@ -11,8 +11,8 @@ SRCS		=	main.cpp \
 
 #IF YOU HAVE HEADER FILES YOU ABSOLUTELY NEED TO ADD THEM IN THE INC_FILES VAR
 INC_FILES	=	\
-				MiniGame.hpp\
 				Key.hpp\
+				MiniGame.hpp\
 
 INC_PATH	=	includes/
 INC			=	-I $(INC_PATH)
