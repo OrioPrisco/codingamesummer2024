@@ -297,6 +297,7 @@ public:
 		std::cerr << reg_0 << "," << reg_3 << std::endl;
 		std::cerr << reg_1 << "," << reg_4 << std::endl;
 		std::cerr << reg_2 << "," << reg_5 << std::endl;
+		std::cerr << "turns: " << reg_6 << std::endl;
 	}
 	void archery_display() {
 		std::cerr << reg_0 << "," << reg_1 << std::endl;
