@@ -47,6 +47,7 @@ int main()
 			games[i].simulateTurn(keys);
 			games[i].display_status();
 			std::cerr << "===" << std::endl;
+			std::cerr << "score: " << evaluate(games, player_idx);
 		}
 		cout << "RIGHT" << endl;
 
