@@ -5,6 +5,7 @@
 #include "MiniGame.hpp"
 #include <cstdlib>
 #include <chrono>
+#include <map>
 
 using namespace std;
 
@@ -51,6 +52,28 @@ void mutate_strat(vector<Key>& keys, int percent_mutation) {
 	}
 }
 
+typedef std::vector<Key> Strats[10];
+void evolve_strats(const MiniGame (&games)[4], Strats (&strats)[3] , int player, int percent_mutation) {
+	std::multimap<double, std::vector<Key>, std::greater<double>> ranked_strats;
+	int opp1 = (player + 1) % 3;
+	int opp2 = (player + 2) % 3;
+
+	//mutate each strat once
+	for (auto& strat : strats[player]) {
+		ranked_strats.insert({eval_of_player(eval_strat(games, strat, strats[opp1][0], strats[opp2][0]), player), strat});
+		std::vector<Key> mutated = strat;
+		mutate_strat(mutated, percent_mutation);
+		ranked_strats.insert({eval_of_player(eval_strat(games, mutated, strats[opp1][0], strats[opp2][0]), player), mutated});
+	}
+	int inserted = 0;
+	// keep best 10
+	for (auto& strat : ranked_strats) {
+		strats[player][inserted++] = std::move(strat.second);
+		if (inserted == 10)
+			break;
+	}
+}
+
 int main()
 {
 	int player_idx;
@@ -64,18 +87,16 @@ int main()
 	games[2].type = Skater;
 	games[3].type = Diving;
 	// game loop
-	std::vector<Key> strategies[10]; // my strarts
-	std::vector<Key> strategies_v1[10]; // my opponent 1 strats
-	std::vector<Key> strategies_v2[10]; // my opponent 2 strats
+	std::vector<Key> strategies[3][10]; // my strats
 	for (int i = 0; i < 10; i++) {
 		std::vector<Key> current;
 		current.reserve(100);
 		for (int j = 0; j < 100; j++) {
 			current.push_back((Key)(rand()%4));
 		}
-		strategies[i] = current;
-		strategies_v1[i] = current;
-		strategies_v2[i] = current;
+		strategies[0][i] = current;
+		strategies[1][i] = current;
+		strategies[2][i] = current;
 	}
 	int glob_scores[3];
 	while (1) {
@@ -94,19 +115,27 @@ int main()
 		auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(time_now - time_start);
 		for (int i = 0; i < 4; i++)
 			games[i].update_state();
-
+		size_t cycle = 0;
 		while (millis.count() < 45)
 		{
 			//mutate stuff here
+			evolve_strats(games, strategies, cycle%3, 50 - (cycle / 10));
 			time_now = std::chrono::system_clock::now();
 			millis = std::chrono::duration_cast<std::chrono::milliseconds>(time_now - time_start);
+			cycle++;
 		}
 		for (int i = 0; i < 4; i++)
 			games[i].display_status();
-		std::cerr << "score: " << eval_of_player(evaluate(games), player_idx) << std::endl;
-		std::cerr << "Took " << millis.count() << "ms" << std::endl;
-		//cout << KeyStrs[strategies[0][0]] << endl;
-		cout << "RIGHT" << endl;
+		std::cerr << "Did " << cycle << " cycles" << std::endl;
+		//std::cerr << "score: " << eval_of_player(evaluate(games), player_idx) << std::endl;
+		//std::cerr << "Took " << millis.count() << "ms" << std::endl;
+		cout << KeyStrs[strategies[player_idx][0][0]] << endl;
+		//cout << "RIGHT" << endl;
 
+		for (auto& strats : strategies) {
+			for (auto& strat : strats) {
+				strat.erase(strat.begin());
+			}
+		}
 	}
 }
