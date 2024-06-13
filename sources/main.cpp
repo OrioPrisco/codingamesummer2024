@@ -81,6 +81,55 @@ void evolve_strats(const MiniGame (&games)[4], Strats (&strats)[3] , int player,
 	}
 }
 
+void dump_turn1(int player_idx, int nb_games, int glob_scores[3], MiniGame (&games)[4]) {
+	std::cerr << player_idx << std::endl;
+	std::cerr << nb_games << std::endl;
+	for (int i = 0; i < 3; i++) {
+		std::cerr << glob_scores[i]
+			<<" "<< games[0].medals[i].gold <<" "<< games[0].medals[i].silver <<" "<< games[0].medals[i].bronze
+			<<" "<< games[1].medals[i].gold <<" "<< games[1].medals[i].silver <<" "<< games[1].medals[i].bronze
+			<<" "<< games[2].medals[i].gold <<" "<< games[2].medals[i].silver <<" "<< games[2].medals[i].bronze
+			<<" "<< games[3].medals[i].gold <<" "<< games[3].medals[i].silver <<" "<< games[3].medals[i].bronze
+			<< std::endl;
+	}
+	for (int i = 0; i < 4; i++) {
+		std::cerr << games[i].gpu << " ";
+		for (int j = 0; j < 7; j++)
+			std::cerr << games[i].regs[j] << " ";
+		std::cerr << std::endl;
+	}
+}
+
+void manual_step_test(MiniGame (&games)[4]) {
+	std::cerr << "stepping" << std::endl;
+	std::map<std::string, Key> keys = {
+		{"UP", UP},
+		{"DOWN", DOWN},
+		{"LEFT", LEFT},
+		{"RIGHT", RIGHT},
+	};
+
+	for(;;) {
+		std::string moves[3];
+		std::cin.ignore();
+		std::getline(cin, moves[0]);
+		std::cerr << "move 1" << moves[0] << std::endl;
+		std::getline(cin, moves[1]);
+		std::cerr << "move 2" << moves[1] << std::endl;
+		std::getline(cin, moves[2]);
+		std::cerr << "move 3" << moves[2] << std::endl;
+		Key key[3];
+		key[0] = keys[moves[0]];
+		key[1] = keys[moves[1]];
+		key[2] = keys[moves[2]];
+		for (int i = 0; i < 4; i++) {
+			games[i].simulateTurn(key);
+			games[i].display_status();
+			std::cerr << "===" << std::endl;
+		}
+	}
+}
+
 int main()
 {
 	int player_idx;
@@ -122,6 +171,9 @@ int main()
 		auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(time_now - time_start);
 		for (int i = 0; i < 4; i++)
 			games[i].update_state();
+		if (first_turn)
+			dump_turn1(player_idx, nb_games, glob_scores, games);
+		//manual_step_test(games);
 		size_t cycle = 0;
 		while (millis.count() < (first_turn?995:45))
 		{
@@ -132,7 +184,10 @@ int main()
 			cycle++;
 		}
 		for (int i = 0; i < 4; i++)
+		{
 			games[i].display_status();
+			std::cerr << "===" << std::endl;
+		}
 		std::cerr << "Did " << cycle << " cycles" << std::endl;
 		//std::cerr << "score: " << eval_of_player(evaluate(games), player_idx) << std::endl;
 		cout << KeyStrs[strategies[player_idx][0][0]] << endl;
