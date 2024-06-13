@@ -128,8 +128,8 @@ int main()
 			games[i].display_status();
 		std::cerr << "Did " << cycle << " cycles" << std::endl;
 		//std::cerr << "score: " << eval_of_player(evaluate(games), player_idx) << std::endl;
-		//std::cerr << "Took " << millis.count() << "ms" << std::endl;
 		cout << KeyStrs[strategies[player_idx][0][0]] << endl;
+		std::cerr << "Took " << millis.count() << "ms" << std::endl;
 		//cout << "RIGHT" << endl;
 
 		for (auto& strats : strategies) {
