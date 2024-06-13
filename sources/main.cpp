@@ -4,6 +4,7 @@
 #include <algorithm>
 #include "MiniGame.hpp"
 #include <cstdlib>
+#include <chrono>
 
 using namespace std;
 
@@ -78,15 +79,23 @@ int main()
 			;
 			std::cin.ignore();
 		}
+		auto time_start = std::chrono::system_clock::now(); // get the current time
+		auto time_now = time_start;
+		auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(time_now - time_start);
 		for (int i = 0; i < 4; i++)
-		{
 			games[i].update_state();
-			Key keys[3] = {RIGHT, RIGHT, RIGHT};
-			games[i].simulateTurn(keys);
-			games[i].display_status();
-			std::cerr << "===" << std::endl;
+
+		while (millis.count() < 45)
+		{
+			//mutate stuff here
+			time_now = std::chrono::system_clock::now();
+			millis = std::chrono::duration_cast<std::chrono::milliseconds>(time_now - time_start);
 		}
+		for (int i = 0; i < 4; i++)
+			games[i].display_status();
 		std::cerr << "score: " << eval_of_player(evaluate(games), player_idx) << std::endl;
+		std::cerr << "Took " << millis.count() << "ms" << std::endl;
+		//cout << KeyStrs[strategies[0][0]] << endl;
 		cout << "RIGHT" << endl;
 
 	}
