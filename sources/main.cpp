@@ -1,6 +1,5 @@
 #include <iostream>
 #include <string>
-#include <vector>
 #include <algorithm>
 #include "MiniGame.hpp"
 #include <cstdlib>
@@ -28,7 +27,7 @@ double eval_of_player(const MiniGame::Evaluation& total_score, int player) {
 	//TODO being 2nd is better than beng 3rd no matter the point difference
 }
 
-MiniGame::Evaluation eval_strat(const MiniGame (&games)[4], const std::vector<Key>& p1, const std::vector<Key>& p2, const std::vector<Key>& p3) {
+MiniGame::Evaluation eval_strat(const MiniGame (&games)[4], Strat p1, Strat p2, Strat p3) {
 	MiniGame games_cpy[4];
 	games_cpy[0] = games[0];
 	games_cpy[1] = games[1];
@@ -36,8 +35,8 @@ MiniGame::Evaluation eval_strat(const MiniGame (&games)[4], const std::vector<Ke
 	games_cpy[3] = games[3];
 
 	//TODO : stop loop once all say game over
-	for (size_t i = 0; i < p1.size(); i++) {
-		Key keys[3] = {p1[i], p2[i], p3[i]};
+	for (size_t i = 0; i < MOVE_PER_STRAT; i++) {
+		Key keys[3] = {(Key)(p1 & 3), (Key)(p2 & 3), (Key)(p3 & 3)};
 		games_cpy[0].simulateTurn(keys);
 		games_cpy[1].simulateTurn(keys);
 		games_cpy[2].simulateTurn(keys);
@@ -49,35 +48,38 @@ MiniGame::Evaluation eval_strat(const MiniGame (&games)[4], const std::vector<Ke
 			+ (games_cpy[3].gpu == "GAME_OVER")
 			) >= 3)
 			break;
+		p1 >>= 2;
+		p2 >>= 2;
+		p3 >>= 2;
 	}
 	return evaluate(games_cpy);
 }
 
-void mutate_strat(vector<Key>& keys, int percent_mutation) {
-	for (size_t i = 0; i < keys.size(); i++) {
+void mutate_strat(Strat& keys, int percent_mutation) {
+	for (size_t i = 0; i < MOVE_PER_STRAT; i++) {
 		if (rand() % 100 < percent_mutation)
-			keys[i] = (Key)(rand()%4);
+			keys ^= (rand()%3 | 1) >> (i * 2);
 	}
 }
 
-typedef std::vector<Key> Strats[POP_ME];
+typedef Strat Strats[POP_ME];
 void evolve_strats(const MiniGame (&games)[4], Strats (&strats)[3] , int player, int percent_mutation, int population_size) {
-	std::multimap<double, std::vector<Key>, std::greater<double>> ranked_strats;
+	std::multimap<double, uint64_t, std::greater<double>> ranked_strats;
 	int opp1 = (player + 1) % 3;
 	int opp2 = (player + 2) % 3;
 
 	//mutate each strat once
 	for (int i = 0; i < population_size; i++) {
-		const std::vector<Key>& strat = strats[player][i];
+		uint64_t strat = strats[player][i];
 		ranked_strats.insert({eval_of_player(eval_strat(games, strat, strats[opp1][0], strats[opp2][0]), player), strat});
-		std::vector<Key> mutated = strat;
+		uint64_t mutated = strat;
 		mutate_strat(mutated, percent_mutation);
 		ranked_strats.insert({eval_of_player(eval_strat(games, mutated, strats[opp1][0], strats[opp2][0]), player), mutated});
 	}
 	int inserted = 0;
 	// keep best pop
 	for (auto& strat : ranked_strats) {
-		strats[player][inserted++] = std::move(strat.second);
+		strats[player][inserted++] = strat.second;
 		if (inserted == population_size)
 			break;
 	}
@@ -147,14 +149,9 @@ int main()
 	games[2].type = Skater;
 	games[3].type = Diving;
 	// game loop
-	std::vector<Key> strategies[3][POP_ME]; // my strats
+	Strat strategies[3][POP_ME]; // my strats
 	for (int i = 0; i < POP_ME; i++) {
-		std::vector<Key> current;
-		current.reserve(100);
-		for (int j = 0; j < 100; j++) {
-			current.push_back((Key)(rand()%4));
-		}
-		strategies[player_idx][i] = current;
+		strategies[player_idx][i] = rand() | (rand() << 16);
 	}
 	for (int i = 0; i < POP_OPP; i++) {
 		strategies[opp1_index][i] = strategies[player_idx][i];
@@ -185,7 +182,7 @@ int main()
 		while (millis.count() < (first_turn?995:45))
 		{
 			//mutate stuff here
-			evolve_strats(games, strategies, cycle%3, mutation_rate, cycle%3==(unsigned int)player_idx?100:10);
+			evolve_strats(games, strategies, cycle%3, mutation_rate, cycle%3==(unsigned int)player_idx?POP_ME:POP_OPP);
 			time_now = std::chrono::system_clock::now();
 			millis = std::chrono::duration_cast<std::chrono::milliseconds>(time_now - time_start);
 			cycle++;
@@ -199,14 +196,13 @@ int main()
 		}
 		std::cerr << "Did " << cycle << " cycles" << std::endl;
 		//std::cerr << "score: " << eval_of_player(evaluate(games), player_idx) << std::endl;
-		cout << KeyStrs[strategies[player_idx][0][0]] << endl;
+		cout << KeyStrs[strategies[player_idx][0] & 3] << endl;
 		std::cerr << "Took " << millis.count() << "ms" << std::endl;
 		//cout << "RIGHT" << endl;
 
 		for (int i = 0; i < 3; i++) {
 			for (int j = 0; j < (i==player_idx?POP_ME:POP_OPP); j++) {
-				std::vector<Key>& strat = strategies[i][j];
-				strat.erase(strat.begin());
+				strategies[i][j] >>= 2;
 			}
 		}
 		first_turn = false;
