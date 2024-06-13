@@ -106,8 +106,8 @@ int main()
 		strategies[2][i] = current;
 	}
 	int glob_scores[3];
+	bool first_turn = true;
 	while (1) {
-
 		for (int i = 0; i < 3; i++) {
 			cin >> glob_scores[i]
 				>> games[0].medals[i].gold >> games[0].medals[i].silver >> games[0].medals[i].bronze
@@ -123,7 +123,7 @@ int main()
 		for (int i = 0; i < 4; i++)
 			games[i].update_state();
 		size_t cycle = 0;
-		while (millis.count() < 45)
+		while (millis.count() < (first_turn?995:45))
 		{
 			//mutate stuff here
 			evolve_strats(games, strategies, cycle%3, 50 - (cycle / 10));
@@ -144,5 +144,6 @@ int main()
 				strat.erase(strat.begin());
 			}
 		}
+		first_turn = false;
 	}
 }
