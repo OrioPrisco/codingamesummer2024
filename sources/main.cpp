@@ -44,7 +44,12 @@ MiniGame::Evaluation eval_strat(const MiniGame (&games)[4], const std::vector<Ke
 	return evaluate(games_cpy);
 }
 
-
+void mutate_strat(vector<Key>& keys, int percent_mutation) {
+	for (size_t i = 0; i < keys.size(); i++) {
+		if (rand() % 100 < percent_mutation)
+			keys[i] = (Key)(rand()%4);
+	}
+}
 
 int main()
 {
@@ -59,13 +64,18 @@ int main()
 	games[2].type = Skater;
 	games[3].type = Diving;
 	// game loop
-	std::vector<Key> strategies[10];
+	std::vector<Key> strategies[10]; // my strarts
+	std::vector<Key> strategies_v1[10]; // my opponent 1 strats
+	std::vector<Key> strategies_v2[10]; // my opponent 2 strats
 	for (int i = 0; i < 10; i++) {
 		std::vector<Key> current;
 		current.reserve(100);
 		for (int j = 0; j < 100; j++) {
 			current.push_back((Key)(rand()%4));
 		}
+		strategies[i] = current;
+		strategies_v1[i] = current;
+		strategies_v2[i] = current;
 	}
 	int glob_scores[3];
 	while (1) {
