@@ -41,6 +41,13 @@ MiniGame::Evaluation eval_strat(const MiniGame (&games)[4], const std::vector<Ke
 		games_cpy[1].simulateTurn(keys);
 		games_cpy[2].simulateTurn(keys);
 		games_cpy[3].simulateTurn(keys);
+		if (
+			( (games_cpy[0].gpu == "GAME_OVER")
+			+ (games_cpy[1].gpu == "GAME_OVER")
+			+ (games_cpy[1].gpu == "GAME_OVER")
+			+ (games_cpy[3].gpu == "GAME_OVER")
+			) >= 3)
+			break;
 	}
 	return evaluate(games_cpy);
 }
