@@ -12,6 +12,7 @@ SRCS		=	main.cpp \
 #IF YOU HAVE HEADER FILES YOU ABSOLUTELY NEED TO ADD THEM IN THE INC_FILES VAR
 INC_FILES	=	\
 				pragma.hpp\
+				parameters.hpp\
 				Key.hpp\
 				MiniGame.hpp\
 

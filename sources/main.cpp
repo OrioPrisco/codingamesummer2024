@@ -6,6 +6,7 @@
 #include <cstdlib>
 #include <chrono>
 #include <map>
+#include "parameters.hpp"
 
 using namespace std;
 
@@ -59,24 +60,25 @@ void mutate_strat(vector<Key>& keys, int percent_mutation) {
 	}
 }
 
-typedef std::vector<Key> Strats[10];
-void evolve_strats(const MiniGame (&games)[4], Strats (&strats)[3] , int player, int percent_mutation) {
+typedef std::vector<Key> Strats[POP_ME];
+void evolve_strats(const MiniGame (&games)[4], Strats (&strats)[3] , int player, int percent_mutation, int population_size) {
 	std::multimap<double, std::vector<Key>, std::greater<double>> ranked_strats;
 	int opp1 = (player + 1) % 3;
 	int opp2 = (player + 2) % 3;
 
 	//mutate each strat once
-	for (auto& strat : strats[player]) {
+	for (int i = 0; i < population_size; i++) {
+		const std::vector<Key>& strat = strats[player][i];
 		ranked_strats.insert({eval_of_player(eval_strat(games, strat, strats[opp1][0], strats[opp2][0]), player), strat});
 		std::vector<Key> mutated = strat;
 		mutate_strat(mutated, percent_mutation);
 		ranked_strats.insert({eval_of_player(eval_strat(games, mutated, strats[opp1][0], strats[opp2][0]), player), mutated});
 	}
 	int inserted = 0;
-	// keep best 10
+	// keep best pop
 	for (auto& strat : ranked_strats) {
 		strats[player][inserted++] = std::move(strat.second);
-		if (inserted == 10)
+		if (inserted == population_size)
 			break;
 	}
 }
@@ -132,8 +134,10 @@ void manual_step_test(MiniGame (&games)[4]) {
 
 int main()
 {
-	int player_idx;
+	int player_idx, opp1_index, opp2_index;
 	cin >> player_idx; cin.ignore();
+	opp1_index = (player_idx + 1) % 3;
+	opp2_index = (player_idx + 2) % 3;
 	int nb_games;
 	cin >> nb_games; cin.ignore();
 
@@ -143,16 +147,18 @@ int main()
 	games[2].type = Skater;
 	games[3].type = Diving;
 	// game loop
-	std::vector<Key> strategies[3][10]; // my strats
-	for (int i = 0; i < 10; i++) {
+	std::vector<Key> strategies[3][POP_ME]; // my strats
+	for (int i = 0; i < POP_ME; i++) {
 		std::vector<Key> current;
 		current.reserve(100);
 		for (int j = 0; j < 100; j++) {
 			current.push_back((Key)(rand()%4));
 		}
-		strategies[0][i] = current;
-		strategies[1][i] = current;
-		strategies[2][i] = current;
+		strategies[player_idx][i] = current;
+	}
+	for (int i = 0; i < POP_OPP; i++) {
+		strategies[opp1_index][i] = strategies[player_idx][i];
+		strategies[opp2_index][i] = strategies[player_idx][i];
 	}
 	int glob_scores[3];
 	bool first_turn = true;
@@ -175,13 +181,16 @@ int main()
 			dump_turn1(player_idx, nb_games, glob_scores, games);
 		//manual_step_test(games);
 		size_t cycle = 0;
+		int mutation_rate = DEFAULT_MUTATION_RATE;
 		while (millis.count() < (first_turn?995:45))
 		{
 			//mutate stuff here
-			evolve_strats(games, strategies, cycle%3, 50 - (cycle / 10));
+			evolve_strats(games, strategies, cycle%3, mutation_rate, cycle%3==(unsigned int)player_idx?100:10);
 			time_now = std::chrono::system_clock::now();
 			millis = std::chrono::duration_cast<std::chrono::milliseconds>(time_now - time_start);
 			cycle++;
+			if (mutation_rate > MIN_MUTATION_RATE && cycle % GEN_TO_LOWER_MUTATION_RATE == 0)
+				mutation_rate--;
 		}
 		for (int i = 0; i < 4; i++)
 		{
@@ -194,8 +203,9 @@ int main()
 		std::cerr << "Took " << millis.count() << "ms" << std::endl;
 		//cout << "RIGHT" << endl;
 
-		for (auto& strats : strategies) {
-			for (auto& strat : strats) {
+		for (int i = 0; i < 3; i++) {
+			for (int j = 0; j < (i==player_idx?POP_ME:POP_OPP); j++) {
+				std::vector<Key>& strat = strategies[i][j];
 				strat.erase(strat.begin());
 			}
 		}
