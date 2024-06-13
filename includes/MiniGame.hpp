@@ -169,7 +169,7 @@ public:
 		skaterDoPlayer(regs[0], regs[3], inputs[0]);
 		skaterDoPlayer(regs[1], regs[4], inputs[1]);
 		skaterDoPlayer(regs[2], regs[5], inputs[2]);
-		bool shares_space[3];
+		bool shares_space[3] = {false, false, false};
 		if (regs[0] % 10 == regs[1] % 10)
 		{
 			shares_space[0] = true;
