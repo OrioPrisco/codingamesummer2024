@@ -70,9 +70,9 @@ void evolve_strats(const MiniGame (&games)[4], Strats (&strats)[3] , int player,
 
 	//mutate each strat once
 	for (int i = 0; i < population_size; i++) {
-		uint64_t strat = strats[player][i];
+		Strat strat = strats[player][i];
 		ranked_strats.insert({eval_of_player(eval_strat(games, strat, strats[opp1][0], strats[opp2][0]), player), strat});
-		uint64_t mutated = strat;
+		Strat mutated = strat;
 		mutate_strat(mutated, percent_mutation);
 		ranked_strats.insert({eval_of_player(eval_strat(games, mutated, strats[opp1][0], strats[opp2][0]), player), mutated});
 	}
