@@ -7,7 +7,7 @@
 
 using namespace std;
 
-double evaluate(MiniGame (&games)[4], int player) {
+MiniGame::Evaluation evaluate(const MiniGame (&games)[4]) {
 	MiniGame::Evaluation scores[4];
 	scores[0] = games[0].evaluate();
 	scores[1] = games[1].evaluate();
@@ -17,9 +17,33 @@ double evaluate(MiniGame (&games)[4], int player) {
 	total_score[0] = scores[0][0] * scores[1][0] * scores[2][0] * scores[3][0];
 	total_score[1] = scores[0][1] * scores[1][1] * scores[2][1] * scores[3][1];
 	total_score[2] = scores[0][2] * scores[1][2] * scores[2][2] * scores[3][2];
+	return total_score;
+}
+
+double eval_of_player(const MiniGame::Evaluation& total_score, int player) {
 	return std::min(total_score[player] - total_score[(player + 1) % 3], total_score[player] - total_score[(player + 2)%3]);
 	//TODO being 2nd is better than beng 3rd no matter the point difference
 }
+
+MiniGame::Evaluation eval_strat(const MiniGame (&games)[4], const std::vector<Key>& p1, const std::vector<Key>& p2, const std::vector<Key>& p3) {
+	MiniGame games_cpy[4];
+	games_cpy[0] = games[0];
+	games_cpy[1] = games[1];
+	games_cpy[2] = games[2];
+	games_cpy[3] = games[3];
+
+	//TODO : stop loop once all say game over
+	for (size_t i = 0; i < p1.size(); i++) {
+		Key keys[3] = {p1[i], p2[i], p3[i]};
+		games_cpy[0].simulateTurn(keys);
+		games_cpy[1].simulateTurn(keys);
+		games_cpy[2].simulateTurn(keys);
+		games_cpy[3].simulateTurn(keys);
+	}
+	return evaluate(games_cpy);
+}
+
+
 
 int main()
 {
@@ -62,7 +86,7 @@ int main()
 			games[i].display_status();
 			std::cerr << "===" << std::endl;
 		}
-		std::cerr << "score: " << evaluate(games, player_idx) << std::endl;
+		std::cerr << "score: " << eval_of_player(evaluate(games), player_idx) << std::endl;
 		cout << "RIGHT" << endl;
 
 	}
