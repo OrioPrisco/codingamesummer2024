@@ -311,60 +311,79 @@ public:
 		std::cerr << regs[2] << "," << regs[5] << std::endl;
 		std::cerr << gpu << std::endl;
 	}
-	double skaterEvaluate(int player) const {
+	typedef std::array<double, 3> Evaluation;
+	Evaluation skaterEvaluate() const {
 		if (gpu == "GAME_OVER")
-			return 0; // exact score is known
-		double score_v1 = regs[player] - regs[(player + 1) % 3];
-		double score_v2 = regs[player] - regs[(player + 2) % 3];
-		return std::min(score_v2, score_v1) / 10;
+			return {0,0,0}; // exact score is known
+		return {
+			((double)regs[0])/10,
+			((double)regs[1])/10,
+			((double)regs[2])/10,
+		};
 		// TODO : take stun into account
 		// TODO : take turns into account
 	}
-	double runnerEvaluate(int player) const {
+	Evaluation runnerEvaluate() const {
 		if (gpu == "GAME_OVER")
-			return 0; // exact score is known
-		double score_v1 = regs[player] - regs[(player + 1) % 3];
-		double score_v2 = regs[player] - regs[(player + 2) % 3];
-		return std::min(score_v2, score_v1) / 10;
+			return {0,0,0}; // exact score is known
+		return {
+			((double)regs[0])/10,
+			((double)regs[1])/10,
+			((double)regs[2])/10,
+		};
 		// TODO : take stun into account
 		// TODO : take dist_left into account
 	}
 	static constexpr int max_archery_dist = 20 * 20;
-	double archeryEvaluate(int player) const {
+	Evaluation archeryEvaluate() const {
 		if (gpu == "GAME_OVER")
-			return 0; // exact score is known
-		int dists[3] = {
-			max_archery_dist - (regs[0] * regs[0] + regs[1] * regs[1]),
-			max_archery_dist - (regs[2] * regs[2] + regs[3] * regs[3]),
-			max_archery_dist - (regs[4] * regs[4] + regs[5] * regs[5]),
+			return {0, 0, 0}; // exact score is known
+		return {
+			(double)(max_archery_dist - (regs[0] * regs[0] + regs[1] * regs[1])) /max_archery_dist,
+			(double)(max_archery_dist - (regs[2] * regs[2] + regs[3] * regs[3])) /max_archery_dist,
+			(double)(max_archery_dist - (regs[4] * regs[4] + regs[5] * regs[5])) /max_archery_dist,
 		};
-		double score_v1 = dists[player] - dists[(player + 1) % 3];
-		double score_v2 = dists[player] - dists[(player + 1) % 3];
-
-		return std::min(score_v1, score_v2) / max_archery_dist;
 		// TODO : take time left into account
 	}
-	double divingEvaluate(int player) const {
+	Evaluation divingEvaluate() const {
 		if (gpu == "GAME_OVER")
-			return 0; // exact score is known
-		double score_v1 = regs[player] - regs[(player + 1) % 3];
-		double score_v2 = regs[player] - regs[(player + 2) % 3];
-		return std::min(score_v2, score_v1) / 10;
+			return {0, 0, 0}; // exact score is known
+		return {
+			((double)regs[0])/10,
+			((double)regs[1])/10,
+			((double)regs[2])/10,
+		};
 		// TODO : take combo into account
 	}
-	double evaluate(int player) const {
-		double medal_score = medals[player].silver + medals[player].gold * 3;
+	Evaluation evaluate() const {
+		Evaluation scores;
+		scores[0] = medals[0].silver + medals[0].gold * 3;
+		scores[1] = medals[1].silver + medals[1].gold * 3;
+		scores[2] = medals[2].silver + medals[2].gold * 3;
+		Evaluation partial_scores;
 		switch(type) {
 			case Runner:
-				return medal_score + std::max(runnerEvaluate(player), 0.0);
+				partial_scores = runnerEvaluate();
+				break;
 			case Skater:
-				return medal_score + std::max(skaterEvaluate(player), 0.0);
+				partial_scores = skaterEvaluate();
+				break;
 			case Archery:
-				return medal_score + std::max(archeryEvaluate(player), 0.0);
+				partial_scores = archeryEvaluate();
+				break;
 			case Diving:
-				return medal_score + std::max(divingEvaluate(player), 0.0);
+				partial_scores = divingEvaluate();
+				break;
 			default:
 				throw std::runtime_error("unknown type");
 		}
+		int positions[3];
+		positions[0] = (partial_scores[0] >= partial_scores[1]) + (partial_scores[0] >= partial_scores[2]);
+		positions[1] = (partial_scores[1] >= partial_scores[0]) + (partial_scores[1] >= partial_scores[2]);
+		positions[2] = (partial_scores[2] >= partial_scores[0]) + (partial_scores[2] >= partial_scores[1]);
+		scores[0] += ((double) positions[0]) /2;
+		scores[1] += ((double) positions[1]) /2;
+		scores[2] += ((double) positions[2]) /2;
+		return scores;
 	}
 };
