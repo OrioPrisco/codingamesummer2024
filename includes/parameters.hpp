@@ -15,3 +15,6 @@
 #include <cstdint>
 typedef uint64_t Strat;
 #define MOVE_PER_STRAT 32
+
+//turn at which the game ends
+#define MAX_TURN 100

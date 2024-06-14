@@ -9,12 +9,12 @@
 
 using namespace std;
 
-MiniGame::Evaluation evaluate(const MiniGame (&games)[4]) {
+MiniGame::Evaluation evaluate(const MiniGame (&games)[4], int turn) {
 	MiniGame::Evaluation scores[4];
-	scores[0] = games[0].evaluate();
-	scores[1] = games[1].evaluate();
-	scores[2] = games[2].evaluate();
-	scores[3] = games[3].evaluate();
+	scores[0] = games[0].evaluate(turn);
+	scores[1] = games[1].evaluate(turn);
+	scores[2] = games[2].evaluate(turn);
+	scores[3] = games[3].evaluate(turn);
 	MiniGame::Evaluation total_score;
 	total_score[0] = scores[0][0] * scores[1][0] * scores[2][0] * scores[3][0];
 	total_score[1] = scores[0][1] * scores[1][1] * scores[2][1] * scores[3][1];
@@ -27,7 +27,7 @@ double eval_of_player(const MiniGame::Evaluation& total_score, int player) {
 	//TODO being 2nd is better than beng 3rd no matter the point difference
 }
 
-MiniGame::Evaluation eval_strat(const MiniGame (&games)[4], Strat p1, Strat p2, Strat p3) {
+MiniGame::Evaluation eval_strat(const MiniGame (&games)[4], Strat p1, Strat p2, Strat p3, int turn) {
 	MiniGame games_cpy[4];
 	games_cpy[0] = games[0];
 	games_cpy[1] = games[1];
@@ -35,7 +35,7 @@ MiniGame::Evaluation eval_strat(const MiniGame (&games)[4], Strat p1, Strat p2, 
 	games_cpy[3] = games[3];
 
 	//TODO : stop loop once all say game over
-	for (size_t i = 0; i < MOVE_PER_STRAT; i++) {
+	for (size_t i = 0; i < MOVE_PER_STRAT && turn < MAX_TURN; i++) {
 		Key keys[3] = {(Key)(p1 & 3), (Key)(p2 & 3), (Key)(p3 & 3)};
 		games_cpy[0].simulateTurn(keys);
 		games_cpy[1].simulateTurn(keys);
@@ -51,8 +51,9 @@ MiniGame::Evaluation eval_strat(const MiniGame (&games)[4], Strat p1, Strat p2, 
 		p1 >>= 2;
 		p2 >>= 2;
 		p3 >>= 2;
+		turn++;
 	}
-	return evaluate(games_cpy);
+	return evaluate(games_cpy, turn);
 }
 
 Strat mutate_strat(Strat keys, int percent_mutation) {
@@ -124,7 +125,7 @@ Strat optimal_runner(const std::string& gpu, size_t pos, int stun) {
 }
 
 typedef Strat Strats[POP_ME];
-void evolve_strats(const MiniGame (&games)[4], Strats (&strats)[3] , int player, int percent_mutation, int population_size) {
+void evolve_strats(const MiniGame (&games)[4], Strats (&strats)[3] , int player, int percent_mutation, int population_size, int turn) {
 	std::multimap<double, Strat, std::greater<double>> ranked_strats;
 	int opp1 = (player + 1) % 3;
 	int opp2 = (player + 2) % 3;
@@ -132,9 +133,9 @@ void evolve_strats(const MiniGame (&games)[4], Strats (&strats)[3] , int player,
 	//mutate each strat once (pretty harshly)
 	for (int i = 0; i < population_size; i++) {
 		Strat strat = strats[player][i];
-		ranked_strats.insert({eval_of_player(eval_strat(games, strat, strats[opp1][0], strats[opp2][0]), player), strat});
+		ranked_strats.insert({eval_of_player(eval_strat(games, strat, strats[opp1][0], strats[opp2][0], turn), player), strat});
 		Strat mutated = mutate_strat(strat, percent_mutation);
-		ranked_strats.insert({eval_of_player(eval_strat(games, mutated, strats[opp1][0], strats[opp2][0]), player), mutated});
+		ranked_strats.insert({eval_of_player(eval_strat(games, mutated, strats[opp1][0], strats[opp2][0], turn), player), mutated});
 	}
 	//breed strats
 	Strats children;
@@ -148,7 +149,7 @@ void evolve_strats(const MiniGame (&games)[4], Strats (&strats)[3] , int player,
 	// evaluate and insert children
 	for (int i = 0; i < population_size; i++) {
 		Strat strat = children[i];
-		ranked_strats.insert({eval_of_player(eval_strat(games, strat, strats[opp1][0], strats[opp2][0]), player), strat});
+		ranked_strats.insert({eval_of_player(eval_strat(games, strat, strats[opp1][0], strats[opp2][0], turn), player), strat});
 	}
 
 	// keep best pop
@@ -233,7 +234,7 @@ int main()
 		strategies[opp2_index][i] = strategies[player_idx][i];
 	}
 	int glob_scores[3];
-	bool first_turn = true;
+	int turn = 0;
 	while (1) {
 		for (int i = 0; i < 3; i++) {
 			cin >> glob_scores[i]
@@ -260,15 +261,15 @@ int main()
 			strategies[opp1_index][POP_OPP- 2] = optimal_runner(games[0].gpu, games[0].regs[opp1_index], games[0].regs[opp1_index + 3]);
 			strategies[opp2_index][POP_OPP- 2] = optimal_runner(games[0].gpu, games[0].regs[opp2_index], games[0].regs[opp2_index + 3]);
 		}
-		if (first_turn)
+		if (turn == 0)
 			dump_turn1(player_idx, nb_games, glob_scores, games);
 		//manual_step_test(games);
 		size_t cycle = 0;
 		int mutation_rate = DEFAULT_MUTATION_RATE;
-		while (millis.count() < (first_turn?995:45))
+		while (millis.count() < (turn?45:995))
 		{
 			//mutate stuff here
-			evolve_strats(games, strategies, cycle%3, mutation_rate, cycle%3==(unsigned int)player_idx?POP_ME:POP_OPP);
+			evolve_strats(games, strategies, cycle%3, mutation_rate, cycle%3==(unsigned int)player_idx?POP_ME:POP_OPP, turn);
 			time_now = std::chrono::system_clock::now();
 			millis = std::chrono::duration_cast<std::chrono::milliseconds>(time_now - time_start);
 			cycle++;
@@ -291,6 +292,6 @@ int main()
 				strategies[i][j] >>= 2;
 			}
 		}
-		first_turn = false;
+		turn++;
 	}
 }

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "parameters.hpp"
 #include <string>
 #include "Key.hpp"
 #include <iostream>
@@ -316,22 +317,19 @@ public:
 		if (gpu == "GAME_OVER")
 			return {0,0,0}; // exact score is known
 		return {
-			((double)regs[0])/10,
-			((double)regs[1])/10,
-			((double)regs[2])/10,
+			((double)regs[0] + (regs[3]>=0?-regs[3]*0.2:regs[3]*2))/10,
+			((double)regs[1] + (regs[4]>=0?-regs[4]*0.2:regs[4]*2))/10,
+			((double)regs[2] + (regs[5]>=0?-regs[5]*0.2:regs[5]*2))/10,
 		};
-		// TODO : take stun into account
-		// TODO : take turns into account
 	}
 	Evaluation runnerEvaluate() const {
 		if (gpu == "GAME_OVER")
 			return {0,0,0}; // exact score is known
 		return {
-			((double)regs[0])/10,
-			((double)regs[1])/10,
-			((double)regs[2])/10,
+			((double)regs[0] - regs[3] * 2)/10,
+			((double)regs[1] - regs[4] * 2)/10,
+			((double)regs[2] - regs[5] * 2)/10,
 		};
-		// TODO : take stun into account
 		// TODO : take dist_left into account
 	}
 	static constexpr int max_archery_dist = 20 * 20;
@@ -345,21 +343,25 @@ public:
 		};
 		// TODO : take time left into account
 	}
+	//TODO:
+	// calculate max possible score for self and opp, and if
+	// result is guaranteed ignore this minigame
 	Evaluation divingEvaluate() const {
 		if (gpu == "GAME_OVER")
 			return {0, 0, 0}; // exact score is known
 		return {
-			((double)regs[0])/10,
-			((double)regs[1])/10,
-			((double)regs[2])/10,
+			((double)regs[0] + regs[3]*0.1)/10,
+			((double)regs[1] + regs[4]*0.1)/10,
+			((double)regs[2] + regs[5]*0.1)/10,
 		};
-		// TODO : take combo into account
 	}
-	Evaluation evaluate() const {
+	Evaluation evaluate(int turn) const {
 		Evaluation scores;
 		scores[0] = medals[0].silver + medals[0].gold * 3;
 		scores[1] = medals[1].silver + medals[1].gold * 3;
 		scores[2] = medals[2].silver + medals[2].gold * 3;
+		if (turn >= MAX_TURN)
+			return scores;
 		Evaluation partial_scores;
 		switch(type) {
 			case Runner:
