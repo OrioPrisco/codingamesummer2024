@@ -66,9 +66,7 @@ Strat optimal_diving(const std::string& gpu) {
 	Strat out = 0;
 	for (size_t i = 0; i < gpu.size(); i++) {
 		out |= charToKey[(int)gpu[i]] << (i * 2);
-		std::cerr << gpu[i] << ":" << (int)charToKey[(int)gpu[i]] << std::endl;
 	}
-	std::cerr << "optimal diving : " << out << std::endl;
 	return out;
 }
 
