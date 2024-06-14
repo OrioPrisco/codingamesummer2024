@@ -34,7 +34,6 @@ MiniGame::Evaluation eval_strat(const MiniGame (&games)[4], Strat p1, Strat p2, 
 	games_cpy[2] = games[2];
 	games_cpy[3] = games[3];
 
-	//TODO : stop loop once all say game over
 	for (size_t i = 0; i < MOVE_PER_STRAT && turn < MAX_TURN; i++) {
 		Key keys[3] = {(Key)(p1 & 3), (Key)(p2 & 3), (Key)(p3 & 3)};
 		games_cpy[0].simulateTurn(keys);
