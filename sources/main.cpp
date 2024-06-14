@@ -125,15 +125,17 @@ Strat optimal_runner(const std::string& gpu, size_t pos, int stun) {
 typedef Strat Strats[POP_ME];
 void evolve_strats(const MiniGame (&games)[4], Strats (&strats)[3] , int player, uint8_t bits_to_flip, int population_size, int turn) {
 	std::multimap<double, Strat, std::greater<double>> ranked_strats;
-	int opp1 = (player + 1) % 3;
-	int opp2 = (player + 2) % 3;
 
+	Strat to_test[3];
+	to_test[0] = strats[0][0];
+	to_test[1] = strats[1][0];
+	to_test[2] = strats[2][0];
 	//mutate each strat once (pretty harshly)
 	for (int i = 0; i < population_size; i++) {
-		Strat strat = strats[player][i];
-		ranked_strats.insert({eval_of_player(eval_strat(games, strat, strats[opp1][0], strats[opp2][0], turn), player), strat});
-		Strat mutated = mutate_strat(strat, bits_to_flip);
-		ranked_strats.insert({eval_of_player(eval_strat(games, mutated, strats[opp1][0], strats[opp2][0], turn), player), mutated});
+		to_test[player] = strats[player][i];
+		ranked_strats.insert({eval_of_player(eval_strat(games, to_test[0], to_test[1], to_test[2], turn), player), to_test[player]});
+		to_test[player] = mutate_strat(to_test[player], bits_to_flip);
+		ranked_strats.insert({eval_of_player(eval_strat(games, to_test[0], to_test[1], to_test[2], turn), player), to_test[player]});
 	}
 	//breed strats
 	Strats children;
@@ -146,8 +148,8 @@ void evolve_strats(const MiniGame (&games)[4], Strats (&strats)[3] , int player,
 	}
 	// evaluate and insert children
 	for (int i = 0; i < population_size; i++) {
-		Strat strat = children[i];
-		ranked_strats.insert({eval_of_player(eval_strat(games, strat, strats[opp1][0], strats[opp2][0], turn), player), strat});
+		to_test[player] = children[i];
+		ranked_strats.insert({eval_of_player(eval_strat(games, to_test[0], to_test[1], to_test[2], turn), player), to_test[player]});
 	}
 
 	// keep best pop
