@@ -114,7 +114,7 @@ Strat optimal_runner(const std::string& gpu, size_t pos, int stun) {
 
 typedef Strat Strats[POP_ME];
 void evolve_strats(const MiniGame (&games)[4], Strats (&strats)[3] , int player, int percent_mutation, int population_size) {
-	std::multimap<double, uint64_t, std::greater<double>> ranked_strats;
+	std::multimap<double, Strat, std::greater<double>> ranked_strats;
 	int opp1 = (player + 1) % 3;
 	int opp2 = (player + 2) % 3;
 
