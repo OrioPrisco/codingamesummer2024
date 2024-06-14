@@ -40,13 +40,6 @@ MiniGame::Evaluation eval_strat(const MiniGame (&games)[4], Strat p1, Strat p2, 
 		games_cpy[1].simulateTurn(keys);
 		games_cpy[2].simulateTurn(keys);
 		games_cpy[3].simulateTurn(keys);
-		if (
-			( (games_cpy[0].gpu == "GAME_OVER")
-			+ (games_cpy[1].gpu == "GAME_OVER")
-			+ (games_cpy[1].gpu == "GAME_OVER")
-			+ (games_cpy[3].gpu == "GAME_OVER")
-			) >= 3)
-			break;
 		p1 >>= 2;
 		p2 >>= 2;
 		p3 >>= 2;
