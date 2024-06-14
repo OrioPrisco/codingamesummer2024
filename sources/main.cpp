@@ -177,17 +177,17 @@ int main()
 			;
 			std::cin.ignore();
 		}
+		auto time_start = std::chrono::system_clock::now(); // get the current time
+		auto time_now = time_start;
+		auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(time_now - time_start);
+		for (int i = 0; i < 4; i++)
+			games[i].update_state();
 		if (games[3].gpu != "GAME_OVER") {
 			Strat optimal_dive = optimal_diving(games[3].gpu);
 			strategies[player_idx][POP_ME - 1] = optimal_dive;
 			strategies[opp1_index][POP_OPP - 1] = optimal_dive;
 			strategies[opp2_index][POP_OPP - 1] = optimal_dive;
 		}
-		auto time_start = std::chrono::system_clock::now(); // get the current time
-		auto time_now = time_start;
-		auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(time_now - time_start);
-		for (int i = 0; i < 4; i++)
-			games[i].update_state();
 		if (first_turn)
 			dump_turn1(player_idx, nb_games, glob_scores, games);
 		//manual_step_test(games);
