@@ -55,11 +55,12 @@ MiniGame::Evaluation eval_strat(const MiniGame (&games)[4], Strat p1, Strat p2, 
 	return evaluate(games_cpy);
 }
 
-void mutate_strat(Strat& keys, int percent_mutation) {
+Strat mutate_strat(Strat keys, int percent_mutation) {
 	for (size_t i = 0; i < MOVE_PER_STRAT; i++) {
 		if (rand() % 100 < percent_mutation)
 			keys ^= (rand()%3 | 1) >> (i * 2);
 	}
+	return keys;
 }
 
 Strat optimal_diving(const std::string& gpu) {
@@ -121,8 +122,7 @@ void evolve_strats(const MiniGame (&games)[4], Strats (&strats)[3] , int player,
 	for (int i = 0; i < population_size; i++) {
 		Strat strat = strats[player][i];
 		ranked_strats.insert({eval_of_player(eval_strat(games, strat, strats[opp1][0], strats[opp2][0]), player), strat});
-		Strat mutated = strat;
-		mutate_strat(mutated, percent_mutation);
+		Strat mutated = mutate_strat(strat, percent_mutation);
 		ranked_strats.insert({eval_of_player(eval_strat(games, mutated, strats[opp1][0], strats[opp2][0]), player), mutated});
 	}
 	int inserted = 0;
