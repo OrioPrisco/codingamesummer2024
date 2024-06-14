@@ -280,7 +280,7 @@ int main()
 			games[i].display_status();
 			std::cerr << "===" << std::endl;
 		}
-		std::cerr << "Did " << cycle << " cycles" << std::endl;
+		std::cerr << "Did " << cycle << " cycles (" << cycle / 3 <<" generations)" << std::endl;
 		//std::cerr << "score: " << eval_of_player(evaluate(games), player_idx) << std::endl;
 		cout << KeyStrs[strategies[player_idx][0] & 3] << endl;
 		std::cerr << "Took " << millis.count() << "ms" << std::endl;
