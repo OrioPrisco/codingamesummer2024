@@ -137,7 +137,7 @@ void evolve_strats(const MiniGame (&games)[4], Strats (&strats)[3] , int player,
 	}
 	//breed strats
 	Strats children;
-	for (int i = 0; i < population_size; i++) {
+	for (int i = 0; i + 1< population_size; i+=2) {
 		size_t parent1_idx = rand() % population_size;
 		size_t parent2_idx = rand() % population_size;
 		std::pair<Strat,Strat> babies = breed_strats(strats[player][parent1_idx], strats[player][parent2_idx], bits_to_flip);
