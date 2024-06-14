@@ -5,6 +5,7 @@
 #include "Key.hpp"
 #include <iostream>
 #include <array>
+#include <climits>
 
 struct Medals {
 	int gold = 0;
@@ -60,7 +61,7 @@ public:
 	}
 	void grant_medals(int scores[3]) {
 		int sec_max = 0;
-		int max = 0;
+		int max = INT_MIN;
 		for (int i = 0; i < 3; i++) {
 			if (scores[i] >= max) {
 				sec_max = max;
