@@ -55,28 +55,27 @@ MiniGame::Evaluation eval_strat(const MiniGame (&games)[4], Strat p1, Strat p2, 
 	return evaluate(games_cpy, turn);
 }
 
-Strat mutate_strat(Strat keys, int percent_mutation) {
-	for (size_t i = 0; i < MOVE_PER_STRAT; i++) {
-		if (rand() % 100 < percent_mutation)
-			keys ^= (rand()%3 | 1) >> (i * 2);
+Strat mutate_strat(Strat keys, uint8_t bits_to_flip) {
+	for (uint8_t i = 0; i < bits_to_flip; i++) {
+		keys ^= (1 << (rand() % MOVE_PER_STRAT));
 	}
 	return keys;
 }
 
 //crossover method
-std::pair<Strat,Strat> breed_strats(Strat parent1, Strat parent2, int percent_mutation) {
+std::pair<Strat,Strat> breed_strats(Strat parent1, Strat parent2, uint8_t bits_to_flip) {
 	Strat bitmask;
 	unsigned int crossover = rand() % MOVE_PER_STRAT;
 	bitmask = (1 << (crossover * 2)) - 1;
 	return {
-		mutate_strat((parent1 & bitmask) | (parent2 & ~bitmask), percent_mutation),
-		mutate_strat((parent1 & ~bitmask) | (parent2 & bitmask), percent_mutation),
+		mutate_strat((parent1 & bitmask) | (parent2 & ~bitmask), bits_to_flip / OFFSPRING_MUTATION_DIV),
+		mutate_strat((parent1 & ~bitmask) | (parent2 & bitmask), bits_to_flip / OFFSPRING_MUTATION_DIV),
 	};
 }
 
 Strat optimal_diving(const std::string& gpu) {
 	Strat out = 0;
-	for (size_t i = 0; i < gpu.size(); i++) {
+	for (uint8_t i = 0; i < gpu.size(); i++) {
 		out |= charToKey[(int)gpu[i]] << (i * 2);
 	}
 	return out;
@@ -94,13 +93,13 @@ Strat optimal_diving(const std::string& gpu) {
 
 Strat optimal_runner(const std::string& gpu, size_t pos, int stun) {
 	Strat out = 0;
-	for (size_t i = 0; pos + 1 < gpu.size() && i < MOVE_PER_STRAT; i++) {
+	for (uint8_t i = 0; pos + 1 < gpu.size() && i < MOVE_PER_STRAT; i++) {
 		Key key = UP;
 		if (stun) {
 			stun--;
 			continue;
 		}
-		size_t dist_to_hedge = gpu.find('#', pos + 1) - (pos + 1);
+		uint8_t dist_to_hedge = gpu.find('#', pos + 1) - (pos + 1);
 		switch (dist_to_hedge) {
 			case 0:
 				key = UP;
@@ -124,7 +123,7 @@ Strat optimal_runner(const std::string& gpu, size_t pos, int stun) {
 }
 
 typedef Strat Strats[POP_ME];
-void evolve_strats(const MiniGame (&games)[4], Strats (&strats)[3] , int player, int percent_mutation, int population_size, int turn) {
+void evolve_strats(const MiniGame (&games)[4], Strats (&strats)[3] , int player, uint8_t bits_to_flip, int population_size, int turn) {
 	std::multimap<double, Strat, std::greater<double>> ranked_strats;
 	int opp1 = (player + 1) % 3;
 	int opp2 = (player + 2) % 3;
@@ -133,7 +132,7 @@ void evolve_strats(const MiniGame (&games)[4], Strats (&strats)[3] , int player,
 	for (int i = 0; i < population_size; i++) {
 		Strat strat = strats[player][i];
 		ranked_strats.insert({eval_of_player(eval_strat(games, strat, strats[opp1][0], strats[opp2][0], turn), player), strat});
-		Strat mutated = mutate_strat(strat, percent_mutation);
+		Strat mutated = mutate_strat(strat, bits_to_flip);
 		ranked_strats.insert({eval_of_player(eval_strat(games, mutated, strats[opp1][0], strats[opp2][0], turn), player), mutated});
 	}
 	//breed strats
@@ -141,7 +140,7 @@ void evolve_strats(const MiniGame (&games)[4], Strats (&strats)[3] , int player,
 	for (int i = 0; i < population_size; i++) {
 		size_t parent1_idx = rand() % population_size;
 		size_t parent2_idx = rand() % population_size;
-		std::pair<Strat,Strat> babies = breed_strats(strats[player][parent1_idx], strats[player][parent2_idx], PERCENT_OFFSPRING_MUTATION_RATE );
+		std::pair<Strat,Strat> babies = breed_strats(strats[player][parent1_idx], strats[player][parent2_idx], bits_to_flip);
 		children[i] = babies.first;
 		children[i+1] = babies.second;
 	}
@@ -226,7 +225,7 @@ int main()
 	// game loop
 	Strat strategies[3][POP_ME]; // my strats
 	for (int i = 0; i < POP_ME; i++) {
-		strategies[player_idx][i] = rand() | (rand() << 16);
+		strategies[player_idx][i] = rand() ^ (rand() << 1);
 	}
 	for (int i = 0; i < POP_OPP; i++) {
 		strategies[opp1_index][i] = strategies[player_idx][i];
