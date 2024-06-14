@@ -66,6 +66,49 @@ Strat optimal_diving(const std::string& gpu) {
 	Strat out = 0;
 	for (size_t i = 0; i < gpu.size(); i++) {
 		out |= charToKey[(int)gpu[i]] << (i * 2);
+		std::cerr << gpu[i] << ":" << (int)charToKey[(int)gpu[i]] << std::endl;
+	}
+	std::cerr << "optimal diving : " << out << std::endl;
+	return out;
+}
+
+/*
+ * dist to # (from pos + 1)
+ * npos: RIGHT
+ * 0:    UP
+ * 1:    LEFT
+ * 2:    DOWN
+ * 3:    RIGHT
+ * 3+:   RIGHT
+ */
+
+Strat optimal_runner(const std::string& gpu, size_t pos, int stun) {
+	Strat out = 0;
+	for (size_t i = 0; pos + 1 < gpu.size() && i < MOVE_PER_STRAT; i++) {
+		Key key = UP;
+		if (stun) {
+			stun--;
+			continue;
+		}
+		size_t dist_to_hedge = gpu.find('#', pos + 1) - (pos + 1);
+		switch (dist_to_hedge) {
+			case 0:
+				key = UP;
+				pos += 2;
+				break;
+			case 1:
+				key = LEFT;
+				pos += 1;
+				break;
+			case 2:
+				pos += 2;
+				key = DOWN;
+				break;
+			default: // 3 , 3+, npos
+				pos += 3;
+				key = RIGHT;
+		}
+		out |= (int)key << (i * 2);
 	}
 	return out;
 }
@@ -187,6 +230,11 @@ int main()
 			strategies[player_idx][POP_ME - 1] = optimal_dive;
 			strategies[opp1_index][POP_OPP - 1] = optimal_dive;
 			strategies[opp2_index][POP_OPP - 1] = optimal_dive;
+		}
+		if (games[0].gpu != "GAME_OVER") {
+			strategies[player_idx][POP_ME - 2] = optimal_runner(games[0].gpu, games[0].regs[player_idx], games[0].regs[player_idx + 3]);
+			strategies[opp1_index][POP_OPP- 2] = optimal_runner(games[0].gpu, games[0].regs[opp1_index], games[0].regs[opp1_index + 3]);
+			strategies[opp2_index][POP_OPP- 2] = optimal_runner(games[0].gpu, games[0].regs[opp2_index], games[0].regs[opp2_index + 3]);
 		}
 		if (first_turn)
 			dump_turn1(player_idx, nb_games, glob_scores, games);
