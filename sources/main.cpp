@@ -63,6 +63,17 @@ Strat mutate_strat(Strat keys, int percent_mutation) {
 	return keys;
 }
 
+//crossover method
+std::pair<Strat,Strat> breed_strats(Strat parent1, Strat parent2, int percent_mutation) {
+	Strat bitmask;
+	unsigned int crossover = rand() % MOVE_PER_STRAT;
+	bitmask = (1 << (crossover * 2)) - 1;
+	return {
+		mutate_strat((parent1 & bitmask) | (parent2 & ~bitmask), percent_mutation),
+		mutate_strat((parent1 & ~bitmask) | (parent2 & bitmask), percent_mutation),
+	};
+}
+
 Strat optimal_diving(const std::string& gpu) {
 	Strat out = 0;
 	for (size_t i = 0; i < gpu.size(); i++) {
@@ -118,16 +129,31 @@ void evolve_strats(const MiniGame (&games)[4], Strats (&strats)[3] , int player,
 	int opp1 = (player + 1) % 3;
 	int opp2 = (player + 2) % 3;
 
-	//mutate each strat once
+	//mutate each strat once (pretty harshly)
 	for (int i = 0; i < population_size; i++) {
 		Strat strat = strats[player][i];
 		ranked_strats.insert({eval_of_player(eval_strat(games, strat, strats[opp1][0], strats[opp2][0]), player), strat});
 		Strat mutated = mutate_strat(strat, percent_mutation);
 		ranked_strats.insert({eval_of_player(eval_strat(games, mutated, strats[opp1][0], strats[opp2][0]), player), mutated});
 	}
-	int inserted = 0;
+	//breed strats
+	Strats children;
+	for (int i = 0; i < population_size; i++) {
+		size_t parent1_idx = rand() % population_size;
+		size_t parent2_idx = rand() % population_size;
+		std::pair<Strat,Strat> babies = breed_strats(strats[player][parent1_idx], strats[player][parent2_idx], PERCENT_OFFSPRING_MUTATION_RATE );
+		children[i] = babies.first;
+		children[i+1] = babies.second;
+	}
+	// evaluate and insert children
+	for (int i = 0; i < population_size; i++) {
+		Strat strat = children[i];
+		ranked_strats.insert({eval_of_player(eval_strat(games, strat, strats[opp1][0], strats[opp2][0]), player), strat});
+	}
+
 	// keep best pop
-	for (auto& strat : ranked_strats) {
+	int inserted = 0;
+	for (const auto& strat : ranked_strats) {
 		strats[player][inserted++] = strat.second;
 		if (inserted == population_size)
 			break;
