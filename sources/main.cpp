@@ -62,6 +62,14 @@ void mutate_strat(Strat& keys, int percent_mutation) {
 	}
 }
 
+Strat optimal_diving(const std::string& gpu) {
+	Strat out = 0;
+	for (size_t i = 0; i < gpu.size(); i++) {
+		out |= charToKey[(int)gpu[i]] << (i * 2);
+	}
+	return out;
+}
+
 typedef Strat Strats[POP_ME];
 void evolve_strats(const MiniGame (&games)[4], Strats (&strats)[3] , int player, int percent_mutation, int population_size) {
 	std::multimap<double, uint64_t, std::greater<double>> ranked_strats;
@@ -168,6 +176,12 @@ int main()
 				>> games[3].medals[i].gold >> games[3].medals[i].silver >> games[3].medals[i].bronze
 			;
 			std::cin.ignore();
+		}
+		if (games[3].gpu != "GAME_OVER") {
+			Strat optimal_dive = optimal_diving(games[3].gpu);
+			strategies[player_idx][POP_ME - 1] = optimal_dive;
+			strategies[opp1_index][POP_OPP - 1] = optimal_dive;
+			strategies[opp2_index][POP_OPP - 1] = optimal_dive;
 		}
 		auto time_start = std::chrono::system_clock::now(); // get the current time
 		auto time_now = time_start;
