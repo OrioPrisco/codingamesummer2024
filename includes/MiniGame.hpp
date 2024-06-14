@@ -62,7 +62,7 @@ public:
 		int sec_max = 0;
 		int max = 0;
 		for (int i = 0; i < 3; i++) {
-			if (scores[i] > max) {
+			if (scores[i] >= max) {
 				sec_max = max;
 				max = scores[i];
 			} else if (scores[i] > sec_max) {
@@ -71,7 +71,7 @@ public:
 		}
 		for (int i = 0; i < 3; i++)
 		{
-			if (scores[i] >= max) {
+			if (scores[i] == max) {
 				medals[i].gold++;
 			} else if (scores[i] == sec_max) {
 				medals[i].silver++;
