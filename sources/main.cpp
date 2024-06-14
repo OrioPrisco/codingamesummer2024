@@ -152,8 +152,12 @@ void evolve_strats(const MiniGame (&games)[4], Strats (&strats)[3] , int player,
 
 	// keep best pop
 	int inserted = 0;
+	Strat previous = 0;
 	for (const auto& strat : ranked_strats) {
+		if (strat.second == previous)
+			continue;
 		strats[player][inserted++] = strat.second;
+		previous = strat.second;
 		if (inserted == population_size)
 			break;
 	}
