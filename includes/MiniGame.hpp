@@ -166,7 +166,7 @@ public:
 	void skaterDoTurn(Key inputs[3]) {
 		if (gpu == "GAME_OVER")
 			return ;
-		if (simulated_turns == 1)
+		if (simulated_turns)
 			return ; //Risk is random every turn, unpredictable
 		skaterDoPlayer(regs[0], regs[3], inputs[0]);
 		skaterDoPlayer(regs[1], regs[4], inputs[1]);
@@ -361,7 +361,7 @@ public:
 		scores[0] = medals[0].silver + medals[0].gold * 3;
 		scores[1] = medals[1].silver + medals[1].gold * 3;
 		scores[2] = medals[2].silver + medals[2].gold * 3;
-		if (turn >= MAX_TURN)
+		if (turn >= MAX_TURN || gpu == "GAME_OVER")
 			return scores;
 		Evaluation partial_scores;
 		switch(type) {
