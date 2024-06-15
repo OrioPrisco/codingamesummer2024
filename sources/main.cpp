@@ -5,6 +5,7 @@
 #include <cstdlib>
 #include <chrono>
 #include <map>
+#include <set>
 #include "parameters.hpp"
 
 using namespace std;
@@ -118,41 +119,37 @@ Strat optimal_runner(const std::string& gpu, size_t pos, int stun) {
 typedef Strat Strats[POP_ME];
 void evolve_strats(const MiniGame (&games)[4], Strats (&strats)[3] , int player, uint8_t bits_to_flip, int population_size, int turn) {
 	std::multimap<double, Strat, std::greater<double>> ranked_strats;
+	std::set<Strat> population;
 
+	//mutate each strat once (pretty harshly)
+	for (int i = 0; i < population_size; i++) {
+		population.insert(strats[player][i]);
+		population.insert(mutate_strat(strats[player][i], bits_to_flip));
+	}
+	//breed strats
+	for (int i = 0; i < population_size; i+=2) {
+		size_t parent1_idx = rand() % population_size;
+		size_t parent2_idx = rand() % population_size;
+		while(parent2_idx == parent1_idx)
+			parent2_idx = rand() % population_size;
+		std::pair<Strat,Strat> babies = breed_strats(strats[player][parent1_idx], strats[player][parent2_idx], bits_to_flip);
+		population.insert(babies.first);
+		population.insert(babies.second);
+	}
+	//evaluate all deduplicated strats
 	Strat to_test[3];
 	to_test[0] = strats[0][0];
 	to_test[1] = strats[1][0];
 	to_test[2] = strats[2][0];
-	//mutate each strat once (pretty harshly)
-	for (int i = 0; i < population_size; i++) {
-		to_test[player] = strats[player][i];
-		ranked_strats.insert({eval_of_player(eval_strat(games, to_test[0], to_test[1], to_test[2], turn), player), to_test[player]});
-		to_test[player] = mutate_strat(to_test[player], bits_to_flip);
-		ranked_strats.insert({eval_of_player(eval_strat(games, to_test[0], to_test[1], to_test[2], turn), player), to_test[player]});
-	}
-	//breed strats
-	Strats children;
-	for (int i = 0; i + 1< population_size; i+=2) {
-		size_t parent1_idx = rand() % population_size;
-		size_t parent2_idx = rand() % population_size;
-		std::pair<Strat,Strat> babies = breed_strats(strats[player][parent1_idx], strats[player][parent2_idx], bits_to_flip);
-		children[i] = babies.first;
-		children[i+1] = babies.second;
-	}
-	// evaluate and insert children
-	for (int i = 0; i < population_size; i++) {
-		to_test[player] = children[i];
+	for (Strat strat : population) {
+		to_test[player] = strat;
 		ranked_strats.insert({eval_of_player(eval_strat(games, to_test[0], to_test[1], to_test[2], turn), player), to_test[player]});
 	}
 
 	// keep best pop
 	int inserted = 0;
-	Strat previous = 0;
 	for (const auto& strat : ranked_strats) {
-		if (strat.second == previous)
-			continue;
 		strats[player][inserted++] = strat.second;
-		previous = strat.second;
 		if (inserted == population_size)
 			break;
 	}
