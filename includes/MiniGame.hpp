@@ -114,7 +114,7 @@ public:
 		return false;
 	}
 	void runnerDoTurn(Key inputs[3]) {
-		if (gpu == "GAME_OVER")
+		if (gpu[0] == 'G')
 			return ;
 		bool done = false;
 		done |= runnerDoPlayer(regs[0], regs[3], inputs[0]);
@@ -164,7 +164,7 @@ public:
 			risk = -2;
 	}
 	void skaterDoTurn(Key inputs[3]) {
-		if (gpu == "GAME_OVER")
+		if (gpu[0] == 'G')
 			return ;
 		if (simulated_turns)
 			return ; //Risk is random every turn, unpredictable
@@ -217,7 +217,7 @@ public:
 			y = -20;
 	}
 	void archeryDoTurn(Key inputs[3]) {
-		if (gpu == "GAME_OVER")
+		if (gpu[0] == 'G')
 			return ;
 		archeryDoPlayer(regs[0], regs[1], inputs[0]);
 		archeryDoPlayer(regs[2], regs[3], inputs[1]);
@@ -244,7 +244,7 @@ public:
 		}
 	}
 	void divingDoTurn(Key inputs[3]) {
-		if (gpu == "GAME_OVER")
+		if (gpu[0] == 'G')
 			return ;
 		divingDoPlayer(regs[0], regs[3], inputs[0]);
 		divingDoPlayer(regs[1], regs[4], inputs[1]);
@@ -257,7 +257,7 @@ public:
 		}
 	}
 	void display_status() const {
-		if (gpu == "GAME_OVER") {
+		if (gpu[0] == 'G') {
 			std::cerr << "GAME_OVER" << std::endl;
 			return ;
 		}
@@ -315,7 +315,7 @@ public:
 	}
 	typedef std::array<double, 3> Evaluation;
 	Evaluation skaterEvaluate() const {
-		if (gpu == "GAME_OVER")
+		if (gpu[0] == 'G')
 			return {0,0,0}; // exact score is known
 		return {
 			((double)regs[0] + (regs[3]>=0?-regs[3]*0.2:regs[3]*2))/10,
@@ -324,7 +324,7 @@ public:
 		};
 	}
 	Evaluation runnerEvaluate() const {
-		if (gpu == "GAME_OVER")
+		if (gpu[0] == 'G')
 			return {0,0,0}; // exact score is known
 		return {
 			((double)regs[0] - regs[3] * 2)/10,
@@ -335,7 +335,7 @@ public:
 	}
 	static constexpr int max_archery_dist = 20 * 20;
 	Evaluation archeryEvaluate() const {
-		if (gpu == "GAME_OVER")
+		if (gpu[0] == 'G')
 			return {0, 0, 0}; // exact score is known
 		return {
 			(double)(max_archery_dist - (regs[0] * regs[0] + regs[1] * regs[1])) /max_archery_dist,
@@ -348,7 +348,7 @@ public:
 	// calculate max possible score for self and opp, and if
 	// result is guaranteed ignore this minigame
 	Evaluation divingEvaluate() const {
-		if (gpu == "GAME_OVER")
+		if (gpu[0] == 'G')
 			return {0, 0, 0}; // exact score is known
 		return {
 			((double)regs[0] + regs[3]*0.1)/10,
@@ -361,7 +361,7 @@ public:
 		scores[0] = medals[0].silver + medals[0].gold * 3;
 		scores[1] = medals[1].silver + medals[1].gold * 3;
 		scores[2] = medals[2].silver + medals[2].gold * 3;
-		if (turn >= MAX_TURN || gpu == "GAME_OVER")
+		if (turn >= MAX_TURN || gpu[0] == 'G')
 			return scores;
 		Evaluation partial_scores;
 		switch(type) {
