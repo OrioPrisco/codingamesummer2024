@@ -3,7 +3,6 @@
 // POP_ME >= POP_OPP !!!
 #define POP_ME 100
 #define POP_OPP 20
-// 100 is 100%
 // divisor applied to offspring's mutation rate
 #define OFFSPRING_MUTATION_DIV 2
 // bits to randomly flip on a mutated copy
