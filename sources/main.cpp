@@ -6,7 +6,6 @@
 #include <chrono>
 #include <map>
 #include <set>
-#include <vector>
 #include "parameters.hpp"
 
 using namespace std;
@@ -121,7 +120,7 @@ typedef Strat Strats[POP_ME];
 void evolve_strats(const MiniGame (&games)[4], Strats (&strats)[3] , int player, uint8_t bits_to_flip, int population_size, int turn) {
 	//std::multimap<double, Strat, std::greater<double>> ranked_strats;
 	std::set<Strat> population;
-	static std::vector<std::pair<double, Strat>> ranked_strats;
+	std::pair<double, Strat> ranked_strats[POP_ME * 3];
 
 	//mutate each strat once (pretty harshly)
 	for (int i = 0; i < population_size; i++) {
@@ -143,11 +142,12 @@ void evolve_strats(const MiniGame (&games)[4], Strats (&strats)[3] , int player,
 	to_test[0] = strats[0][0];
 	to_test[1] = strats[1][0];
 	to_test[2] = strats[2][0];
+	size_t i = 0;
 	for (Strat strat : population) {
 		to_test[player] = strat;
-		ranked_strats.push_back({eval_of_player(eval_strat(games, to_test[0], to_test[1], to_test[2], turn), player), to_test[player]});
+		ranked_strats[i++] = {eval_of_player(eval_strat(games, to_test[0], to_test[1], to_test[2], turn), player), to_test[player]};
 	}
-	std::sort(ranked_strats.begin(), ranked_strats.end(), [](const auto&a, const auto&b) { return a.first > b.first;});
+	std::sort(ranked_strats, ranked_strats + population.size(), [](const auto&a, const auto&b) { return a.first > b.first;});
 
 	// keep best pop
 	int inserted = 0;
@@ -156,7 +156,6 @@ void evolve_strats(const MiniGame (&games)[4], Strats (&strats)[3] , int player,
 		if (inserted == population_size)
 			break;
 	}
-	ranked_strats.clear();
 }
 
 void dump_turn1(int player_idx, int nb_games, int glob_scores[3], MiniGame (&games)[4]) {
