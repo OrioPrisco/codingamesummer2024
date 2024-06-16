@@ -5,7 +5,7 @@
 #include <cstdlib>
 #include <chrono>
 #include <map>
-#include <set>
+#include <unordered_set>
 #include "parameters.hpp"
 
 using namespace std;
@@ -118,9 +118,8 @@ Strat optimal_runner(const std::string& gpu, size_t pos, int stun) {
 
 typedef Strat Strats[POP_ME];
 void evolve_strats(const MiniGame (&games)[4], Strats (&strats)[3] , int player, uint8_t bits_to_flip, int population_size, int turn) {
-	//std::multimap<double, Strat, std::greater<double>> ranked_strats;
-	std::set<Strat> population;
 	std::pair<double, Strat> ranked_strats[POP_ME * 3];
+	static std::unordered_set<Strat> population;
 
 	//mutate each strat once (pretty harshly)
 	for (int i = 0; i < population_size; i++) {
@@ -156,6 +155,7 @@ void evolve_strats(const MiniGame (&games)[4], Strats (&strats)[3] , int player,
 		if (inserted == population_size)
 			break;
 	}
+	population.clear();
 }
 
 void dump_turn1(int player_idx, int nb_games, int glob_scores[3], MiniGame (&games)[4]) {
