@@ -13,6 +13,11 @@ struct Medals {
 	int bronze = 0;
 };
 
+
+std::ostream& operator<<(std::ostream& o, const Medals& medals) {
+	return o << medals.gold << "G " << medals.silver << "S " << medals.bronze << "B";
+}
+
 enum Type {
 	Runner,
 	Skater,
@@ -255,6 +260,21 @@ public:
 			int scores[3] = {regs[0], regs[1], regs[2]};
 			grant_medals(scores);
 		}
+	}
+	static constexpr const char* names[] = {
+		"RUNNER",
+		"SKATER",
+		"ARCHERY",
+		"DIVING",
+	};
+	void display_medals(int turn) const {
+		Evaluation score = evaluate(turn);
+		std::cerr
+			<< names[type]
+			<< medals[0] << ":" << score[0] << std::endl
+			<< medals[1] << ":" << score[1] << std::endl
+			<< medals[2] << ":" << score[2] << std::endl
+		;
 	}
 	void display_status() const {
 		if (gpu[0] == 'G') {
