@@ -270,16 +270,16 @@ int main()
 			if (mutation_rate > MIN_MUTATION_RATE && cycle % GEN_TO_LOWER_MUTATION_RATE == 0)
 				mutation_rate--;
 		}
+		/*
 		for (int i = 0; i < 4; i++)
 		{
 			games[i].display_status();
 			std::cerr << "===" << std::endl;
 		}
+		*/
 		std::cerr << "Did " << cycle << " cycles (" << cycle / 3 <<" generations)" << std::endl;
-		//std::cerr << "score: " << eval_of_player(evaluate(games), player_idx) << std::endl;
 		cout << KeyStrs[strategies[player_idx][0] & 3] << endl;
 		std::cerr << "Took " << millis.count() << "ms" << std::endl;
-		//cout << "RIGHT" << endl;
 
 		for (int i = 0; i < 3; i++) {
 			for (int j = 0; j < (i==player_idx?POP_ME:POP_OPP); j++) {
