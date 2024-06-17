@@ -129,6 +129,34 @@ public:
 			gpu = "GAME_OVER";
 		}
 	}
+	void runnerDoTurns(const Strat inputs[3], int turn) {
+		//TODO : calculate position of leader, and check if they could finish or not
+		if (gpu[0] == 'G')
+			return;
+		bool done = false;
+		Strat p1 = inputs[0];
+		Strat p2 = inputs[1];
+		Strat p3 = inputs[2];
+		for(uint8_t i = 0; i < MOVE_PER_STRAT && turn + i < MAX_TURN; ++i) {
+			done |= runnerDoPlayer(regs[0], regs[3], (Key)(p1 & 3));
+			done |= runnerDoPlayer(regs[1], regs[4], (Key)(p2 & 3));
+			done |= runnerDoPlayer(regs[2], regs[5], (Key)(p3 & 3));
+			if (done) {
+				int positions[3] = {
+					std::min(FIELD_SIZE - 1, regs[0]),
+					std::min(FIELD_SIZE - 1, regs[1]),
+					std::min(FIELD_SIZE - 1, regs[2])
+				};
+
+				grant_medals(positions);
+				gpu = "GAME_OVER";
+				return;
+			}
+			p1 >>= 2;
+			p2 >>= 2;
+			p3 >>= 2;
+		}
+	}
 	void skaterDoPlayer(int& pos, int& risk, Key key) {
 		if (risk < 0)
 		{
@@ -195,6 +223,14 @@ public:
 			gpu = "GAME_OVER";
 		}
 	}
+	void skaterDoTurns(const Strat inputs[3], int turn) {
+		if (turn + regs[6] >= MAX_TURN) {
+			gpu = "GAME_OVER";// makes evaluation ignore partial score
+			return;
+		}
+		Key keys[3] = { (Key)(inputs[0] & 3), (Key)(inputs[1] & 3), (Key)(inputs[2] & 3)};
+		skaterDoTurn(keys);
+	}
 	void archeryDoPlayer(int& x, int& y, Key key) {
 		int wind_force = gpu[0] - '0';
 		if (key == UP)
@@ -232,6 +268,37 @@ public:
 			grant_medals(dists);
 		}
 	}
+	void archeryDoTurns(const Strat inputs[3], int turn) {
+		if (gpu[0] == 'G')
+			return;
+		if (turn + regs[6] >= MAX_TURN) {
+			gpu = "GAME_OVER";// makes evaluation ignore partial score
+			return;
+		}
+		Strat p1 = inputs[0];
+		Strat p2 = inputs[1];
+		Strat p3 = inputs[2];
+		for(uint8_t i = 0; i < MOVE_PER_STRAT && turn + i < MAX_TURN; ++i) {
+			archeryDoPlayer(regs[0], regs[1], (Key)(p1 & 3));
+			archeryDoPlayer(regs[2], regs[3], (Key)(p2 & 3));
+			archeryDoPlayer(regs[4], regs[5], (Key)(p3 & 3));
+			gpu.erase(0, 1); // remove first char
+			if (gpu.empty())
+			{
+				gpu = "GAME_OVER";
+				int dists[3] = {
+					-(regs[0] * regs[0] + regs[1] * regs[1]),
+					-(regs[2] * regs[2] + regs[3] * regs[3]),
+					-(regs[4] * regs[4] + regs[5] * regs[5]),
+				};
+				grant_medals(dists);
+				return;
+			}
+			p1 >>= 2;
+			p2 >>= 2;
+			p3 >>= 2;
+		}
+	}
 	void divingDoPlayer(int& score, int& combo, Key key) {
 		char gpu_key = "UDLR"[key];
 		if (gpu[0] == gpu_key) {
@@ -254,14 +321,36 @@ public:
 			grant_medals(scores);
 		}
 	}
+	void divingDoTurns(const Strat inputs[3], int turn) {
+		if (gpu[0] == 'G')
+			return ;
+		Strat p1 = inputs[0];
+		Strat p2 = inputs[1];
+		Strat p3 = inputs[2];
+		for(uint8_t i = 0; i < MOVE_PER_STRAT && turn + i < MAX_TURN; ++i) {
+			divingDoPlayer(regs[0], regs[3], (Key)(p1 & 3));
+			divingDoPlayer(regs[1], regs[4], (Key)(p2 & 3));
+			divingDoPlayer(regs[2], regs[5], (Key)(p3 & 3));
+			gpu.erase(0, 1); // remove first char
+			if (gpu.empty()) {
+				gpu = "GAME_OVER";
+				int scores[3] = {regs[0], regs[1], regs[2]};
+				grant_medals(scores);
+				return;
+			}
+			p1 >>= 2;
+			p2 >>= 2;
+			p3 >>= 2;
+		}
+	}
 	static constexpr const char* names[] = {
 		"RUNNER",
 		"SKATER",
 		"ARCHERY",
 		"DIVING",
 	};
-	void display_medals(int turn) const {
-		Evaluation score = evaluate(turn);
+	void display_medals() const {
+		Evaluation score = evaluate();
 		std::cerr
 			<< names[type]
 			<< medals[0] << ":" << score[0] << std::endl
@@ -368,12 +457,12 @@ public:
 			((double)regs[2] + regs[5]*0.1)/10,
 		};
 	}
-	Evaluation evaluate(int turn) const {
+	Evaluation evaluate() const {
 		Evaluation scores;
 		scores[0] = medals[0].silver + medals[0].gold * 3;
 		scores[1] = medals[1].silver + medals[1].gold * 3;
 		scores[2] = medals[2].silver + medals[2].gold * 3;
-		if (turn >= MAX_TURN || gpu[0] == 'G')
+		if (gpu[0] == 'G')
 			return scores;
 		Evaluation partial_scores;
 		switch(type) {
