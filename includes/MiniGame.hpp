@@ -30,13 +30,6 @@ public:
 	Type type;
 	std::string gpu;
 	int regs[7];
-//	int reg_0;
-//	int reg_1;
-//	int reg_2;
-//	int reg_3;
-//	int reg_4;
-//	int reg_5;
-//	int reg_6;
 	Medals medals[3];
 	int simulated_turns = 0;
 
@@ -362,7 +355,6 @@ public:
 			(double)(max_archery_dist - (regs[2] * regs[2] + regs[3] * regs[3])) /max_archery_dist,
 			(double)(max_archery_dist - (regs[4] * regs[4] + regs[5] * regs[5])) /max_archery_dist,
 		};
-		// TODO : take time left into account
 	}
 	//TODO:
 	// calculate max possible score for self and opp, and if
