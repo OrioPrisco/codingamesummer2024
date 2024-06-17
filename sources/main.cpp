@@ -183,6 +183,7 @@ void manual_step_test(MiniGame (&games)[4]) {
 		{"RIGHT", RIGHT},
 	};
 
+	int turn = 1;
 	for(;;) {
 		std::string moves[3];
 		std::cin.ignore();
@@ -199,8 +200,10 @@ void manual_step_test(MiniGame (&games)[4]) {
 		for (int i = 0; i < 4; i++) {
 			games[i].simulateTurn(key);
 			games[i].display_status();
+			games[i].display_medals(turn);
 			std::cerr << "===" << std::endl;
 		}
+		turn++;
 	}
 }
 
