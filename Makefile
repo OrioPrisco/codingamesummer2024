@@ -15,6 +15,7 @@ INC_FILES	=	\
 				parameters.hpp\
 				Key.hpp\
 				MiniGame.hpp\
+				lru_cache.hpp\
 
 INC_PATH	=	includes/
 INC			=	-I $(INC_PATH)

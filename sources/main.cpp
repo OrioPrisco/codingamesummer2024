@@ -7,8 +7,22 @@
 #include <map>
 #include <set>
 #include "parameters.hpp"
+#include <LRUCache.hpp>
 
 using namespace std;
+
+namespace std {
+	template <>
+		struct hash<std::array<Strat, 3>> {
+			std::size_t operator()(const std::array<Strat, 3>& k) const {
+				using std::hash;
+			return hash<Strat>()((uint64_t)k[0] | ((uint64_t)k[1] << 32))
+				^ (hash<Strat>()(k[2]) << 1);
+		};
+	};
+}
+
+LRUCache<std::array<Strat, 3>, MiniGame::Evaluation> lru_cache(POP_ME * 3 + POP_OPP * 6);
 
 MiniGame::Evaluation evaluate(const MiniGame (&games)[4], int turn) {
 	MiniGame::Evaluation scores[4];
@@ -29,6 +43,10 @@ double eval_of_player(const MiniGame::Evaluation& total_score, int player) {
 }
 
 MiniGame::Evaluation eval_strat(const MiniGame (&games)[4], Strat p1, Strat p2, Strat p3, int turn) {
+	auto it = lru_cache.get({p1, p2, p3});
+	if (it != lru_cache.end()) {
+		return it->second;
+	}
 	MiniGame games_cpy[4];
 	games_cpy[0] = games[0];
 	games_cpy[1] = games[1];
@@ -46,7 +64,9 @@ MiniGame::Evaluation eval_strat(const MiniGame (&games)[4], Strat p1, Strat p2, 
 		p3 >>= 2;
 		turn++;
 	}
-	return evaluate(games_cpy, turn);
+	MiniGame::Evaluation eval = evaluate(games_cpy, turn);
+	lru_cache.put({p1, p2, p3}, eval);
+	return eval;
 }
 
 Strat mutate_strat(Strat keys, uint8_t bits_to_flip) {
@@ -290,5 +310,11 @@ int main()
 			}
 		}
 		turn++;
+		//lru_cache.clear(); // could bitshift all results instead
+		lru_cache.map([](auto& a) {
+			a.first[0] >>= 2;
+			a.first[1] >>= 2;
+			a.first[2] >>= 2;
+		});
 	}
 }
