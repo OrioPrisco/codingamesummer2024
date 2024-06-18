@@ -4,7 +4,7 @@ BINARY		=	compiled
 CXX			=	g++
 
 CPPFLAGS	=	-MMD -g3
-CXXFLAGS	=	-std=c++17 -g3 -Wall -Wextra #-Werror
+CXXFLAGS	=	-std=c++20 -g3 -Wall -Wextra #-Werror
 
 #ADD YOUR SOURCES BELOW WITHOUT THE SOURCE PREFIX MAIN.C GIVEN AS EXAMPLE
 SRCS		=	main.cpp \
