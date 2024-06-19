@@ -81,7 +81,7 @@ public:
 	}
 	static constexpr int STUN_DURATION = 2;
 	static constexpr int FIELD_SIZE = 30;
-	bool runnerDoPlayer(int& pos, int& stun, Key key) {
+	bool runnerDoPlayer(int& pos, int& stun, Key key) const {
 		if (stun) {
 			stun--;
 			return false;
@@ -157,7 +157,25 @@ public:
 			p3 >>= 2;
 		}
 	}
-	void skaterDoPlayer(int& pos, int& risk, Key key) {
+	void runnerDoTurns(MiniGamesResults& res, Strat strat, int player, int turn) const {
+		//TODO : calculate position of leader, and check if they could finish or not
+		if (gpu[0] == 'G')
+			return;
+		int pos = regs[0 + player];
+		int stun = res.runner_stun;
+		res.runner_turn = 0;
+		for(uint8_t i = 0; i < MOVE_PER_STRAT && turn + i < MAX_TURN; ++i) {
+			if (runnerDoPlayer(pos, stun, (Key)(strat & 3))) {
+				res.runner_turn = i;
+				res.runner_positions[i] = pos;
+				return ;
+			}
+			strat >>= 2;
+			res.runner_positions[i] = pos;
+		}
+		res.runner_stun = stun;
+	}
+	void skaterDoPlayer(int& pos, int& risk, Key key) const {
 		if (risk < 0)
 		{
 			return ;
@@ -231,8 +249,21 @@ public:
 		Key keys[3] = { (Key)(inputs[0] & 3), (Key)(inputs[1] & 3), (Key)(inputs[2] & 3)};
 		skaterDoTurn(keys);
 	}
-	void archeryDoPlayer(int& x, int& y, Key key) {
-		int wind_force = gpu[0] - '0';
+	void skaterDoTurns(MiniGamesResults& res, Strat strat, int player, int turn) const {
+		res.skater_done = false;
+		if (turn + regs[6] >= MAX_TURN || gpu[0] == 'G') {
+			res.skater_pos = -1;// makes evaluation ignore partial score
+			return;
+		}
+		int risk = regs[3 + player];
+		int pos  = regs[0 + player];
+		skaterDoPlayer(pos, risk, (Key)(strat & 3));
+		res.skater_pos = pos;
+		res.skater_risk = risk;
+		//TODO: need to know whether we're done or not, do it in eval ?
+	}
+	void archeryDoPlayer(int& x, int& y, Key key, int offset = 0) const {
+		int wind_force = gpu[offset] - '0';
 		if (key == UP)
 			y -= wind_force;
 		else if (key == DOWN)
@@ -299,9 +330,22 @@ public:
 			p3 >>= 2;
 		}
 	}
-	void divingDoPlayer(int& score, int& combo, Key key) {
+	void archeryDoTurns(MiniGamesResults& res, Strat strat, int player, int turn) const {
+		if (gpu[0] == 'G' || turn + regs[6] >= MAX_TURN) {
+			res.archery_distance2 = -1;
+			return;
+		}
+		int x = regs[(player * 2)];
+		int y = regs[(player * 2) + 1];
+		for(uint8_t i = 0; i < gpu.size(); ++i) {// We know we have enough time to finish, and max_turn < MOVE_PER_STRAT(16)
+			archeryDoPlayer(x, y, (Key)(strat & 3), i);
+			strat >>= 2;
+		}
+		res.archery_distance2 = (x * x) + (y * y);
+	}
+	void divingDoPlayer(int& score, int& combo, Key key, int offset = 0) const {
 		char gpu_key = "UDLR"[key];
-		if (gpu[0] == gpu_key) {
+		if (gpu[offset] == gpu_key) {
 			combo++;
 			score += combo;
 		} else {
@@ -342,6 +386,19 @@ public:
 			p2 >>= 2;
 			p3 >>= 2;
 		}
+	}
+	void divingDoTurns(MiniGamesResults& res, Strat strat, int player, int turn) const {
+		if (gpu[0] == 'G' || gpu.size() + turn > MAX_TURN) {
+			res.diving_score = -1;
+			return ;
+		}
+		int score = regs[0 + player];
+		int combo = regs[3 + player];
+		for(uint8_t i = 0; i < gpu.size(); ++i) {
+			divingDoPlayer(score, combo, (Key)(strat & 3));
+			strat >>= 2;
+		}
+		res.diving_score = score;
 	}
 	static constexpr const char* names[] = {
 		"RUNNER",
