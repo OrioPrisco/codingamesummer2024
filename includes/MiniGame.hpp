@@ -459,9 +459,9 @@ public:
 	}
 	Evaluation evaluate() const {
 		Evaluation scores;
-		scores[0] = medals[0].silver + medals[0].gold * 3;
-		scores[1] = medals[1].silver + medals[1].gold * 3;
-		scores[2] = medals[2].silver + medals[2].gold * 3;
+		scores[0] = std::max<double>(medals[0].silver + medals[0].gold * 3, 0.01);
+		scores[1] = std::max<double>(medals[1].silver + medals[1].gold * 3, 0.01);
+		scores[2] = std::max<double>(medals[2].silver + medals[2].gold * 3, 0.01);
 		if (gpu[0] == 'G')
 			return scores;
 		Evaluation partial_scores;
