@@ -110,6 +110,20 @@ Strat optimal_runner(const std::string& gpu, size_t pos, int stun) {
 	return out;
 }
 
+size_t get_tournament_idx(size_t population_size) {
+	size_t parent_idx = rand() % population_size;
+	uint8_t i = 0;
+	while (i < 3) {
+		size_t competitor_idx = rand() % population_size;
+		if (competitor_idx == parent_idx)
+			continue;
+		if (competitor_idx > parent_idx)
+			parent_idx = competitor_idx;
+		i++;
+	}
+	return parent_idx;
+}
+
 typedef Strat Strats[POP_ME];
 void evolve_strats(const MiniGame (&games)[4], Strats (&strats)[3] , int player, uint8_t bits_to_flip, int population_size, int turn) {
 	std::multimap<double, Strat, std::greater<double>> ranked_strats;
@@ -122,7 +136,7 @@ void evolve_strats(const MiniGame (&games)[4], Strats (&strats)[3] , int player,
 	}
 	//breed strats
 	for (int i = 0; i < population_size; i+=2) {
-		size_t parent1_idx = rand() % population_size;
+		size_t parent1_idx = get_tournament_idx(population_size);
 		size_t parent2_idx = rand() % population_size;
 		while(parent2_idx == parent1_idx)
 			parent2_idx = rand() % population_size;
