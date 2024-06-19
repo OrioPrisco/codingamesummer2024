@@ -36,6 +36,18 @@ struct MiniGamesResults {
 
 typedef uint32_t Strat;
 #define MOVE_PER_STRAT 16
+#include <utility>
+typedef std::pair<Strat, MiniGamesResults> Genome;
+
+#include <memory>
+namespace std {
+	template <>
+	struct hash<Genome> {
+		size_t operator()(const Genome& g) {
+			return hash<Strat>()(g.first);
+		}
+	};
+}
 
 //turn at which the game ends
 #define MAX_TURN 100
