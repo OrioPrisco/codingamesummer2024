@@ -38,7 +38,7 @@ public:
 		simulated_turns = 0;
 	}
 
-	void simulateTurn(Key inputs[3]) {
+	void simulateTurn(const Key inputs[3]) {
 		switch(type) {
 			case Runner:
 				runnerDoTurn(inputs);
@@ -57,7 +57,7 @@ public:
 		}
 		simulated_turns++;
 	}
-	void grant_medals(int scores[3]) {
+	void grant_medals(const int scores[3]) {
 		int sec_max = 0;
 		int max = INT_MIN;
 		for (int i = 0; i < 3; i++) {
@@ -111,7 +111,7 @@ public:
 			stun = STUN_DURATION;
 		return false;
 	}
-	void runnerDoTurn(Key inputs[3]) {
+	void runnerDoTurn(const Key inputs[3]) {
 		if (gpu[0] == 'G')
 			return ;
 		bool done = false;
@@ -207,7 +207,7 @@ public:
 		if (risk >= 5)
 			risk = -2;
 	}
-	void skaterDoTurn(Key inputs[3]) {
+	void skaterDoTurn(const Key inputs[3]) {
 		if (gpu[0] == 'G')
 			return ;
 		if (simulated_turns)
@@ -281,7 +281,7 @@ public:
 		if (y < -20)
 			y = -20;
 	}
-	void archeryDoTurn(Key inputs[3]) {
+	void archeryDoTurn(const Key inputs[3]) {
 		if (gpu[0] == 'G')
 			return ;
 		archeryDoPlayer(regs[0], regs[1], inputs[0]);
@@ -352,7 +352,7 @@ public:
 			combo = 0;
 		}
 	}
-	void divingDoTurn(Key inputs[3]) {
+	void divingDoTurn(const Key inputs[3]) {
 		if (gpu[0] == 'G')
 			return ;
 		divingDoPlayer(regs[0], regs[3], inputs[0]);
