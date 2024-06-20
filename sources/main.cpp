@@ -5,11 +5,13 @@
 #include <cstdlib>
 #include <chrono>
 #include <map>
+#include <unordered_map>
 #include <unordered_set>
 #include "parameters.hpp"
 
 using namespace std;
 
+std::unordered_map<Strat, MiniGamesResults> partial_resuts[3];
 MiniGame::Evaluation evaluate(const MiniGame (&games)[4]) {
 	MiniGame::Evaluation scores[4];
 	scores[0] = games[0].evaluate();
@@ -28,13 +30,16 @@ double eval_of_player(const MiniGame::Evaluation& total_score, int player) {
 	//TODO being 2nd is better than beng 3rd no matter the point difference
 }
 
-Genome genome_from_strat(Strat strat, int player, const MiniGame (&games)[4], int turn) {
-	Genome out;
-	out.first = strat;
-	games[0].runnerDoTurns(out.second, strat, player, turn);
-	games[1].archeryDoTurns(out.second, strat, player, turn);
-	games[2].skaterDoTurns(out.second, strat, player, turn);
-	games[3].divingDoTurns(out.second, strat, player, turn);
+MiniGamesResults results_from_strat(Strat strat, int player, const MiniGame (&games)[4], int turn) {
+	auto it = partial_resuts[player].find(strat);
+	if (it != partial_resuts[player].end())
+		return it->second;
+	MiniGamesResults out;
+	games[0].runnerDoTurns(out, strat, player, turn);
+	games[1].archeryDoTurns(out, strat, player, turn);
+	games[2].skaterDoTurns(out, strat, player, turn);
+	games[3].divingDoTurns(out, strat, player, turn);
+	partial_resuts[player][strat] = out;
 	return (out);
 }
 
@@ -246,22 +251,22 @@ size_t get_tournament_idx(size_t population_size) {
 		size_t competitor_idx = rand() % population_size;
 		if (competitor_idx == parent_idx)
 			continue;
-		if (competitor_idx < parent_idx)
+		if (competitor_idx > parent_idx)
 			parent_idx = competitor_idx;
 		i++;
 	}
 	return parent_idx;
 }
 
-typedef Genome Genomes[POP_ME];
-void evolve_strats(const MiniGame (&games)[4], Genomes (&genes)[3] , int player, uint8_t bits_to_flip, int population_size, int turn) {
-	std::multimap<double, Genome, std::greater<double>> ranked_strats;
-	std::unordered_set<Genome> population;
+typedef Strat Strats[POP_ME];
+void evolve_strats(const MiniGame (&games)[4], Strats (&genes)[3] , int player, uint8_t bits_to_flip, int population_size, int turn) {
+	std::multimap<double, Strat, std::greater<double>> ranked_strats;
+	std::unordered_set<Strat> population;
 
 	//mutate each strat once (pretty harshly)
 	for (int i = 0; i < population_size; i++) {
 		population.insert(genes[player][i]);
-		Genome mutant = genome_from_strat(mutate_strat(genes[player][i].first, bits_to_flip), player, games, turn);
+		Strat mutant = mutate_strat(genes[player][i], bits_to_flip);
 		population.insert(mutant); // std::move ?
 	}
 	//breed strats
@@ -271,22 +276,24 @@ void evolve_strats(const MiniGame (&games)[4], Genomes (&genes)[3] , int player,
 		while(parent2_idx == parent1_idx)
 			parent2_idx = rand() % population_size;
 		std::pair<Strat,Strat> babies = breed_strats(
-			genes[player][parent1_idx].first,
-			genes[player][parent2_idx].first, bits_to_flip
+			genes[player][parent1_idx],
+			genes[player][parent2_idx], bits_to_flip
 		);
-		Genome baby1 = genome_from_strat(babies.first, player, games, turn);
-		Genome baby2 = genome_from_strat(babies.second, player, games, turn);
-		population.insert(baby1);
-		population.insert(baby2);
+		population.insert(babies.first);
+		population.insert(babies.second);
 	}
 	//evaluate all deduplicated strats
-	Genome to_test[3];
+	Strat to_test[3];
 	to_test[0] = genes[0][0];
 	to_test[1] = genes[1][0];
 	to_test[2] = genes[2][0];
-	for (Genome gene : population) {
+	for (Strat gene : population) {
 		to_test[player] = gene;
-		ranked_strats.insert({eval_of_player(eval_strat(games, to_test[0].second, to_test[1].second, to_test[2].second), player), to_test[player]});
+		ranked_strats.insert({eval_of_player(eval_strat(games,
+				results_from_strat(to_test[0], 0, games, turn),
+				results_from_strat(to_test[1], 1, games, turn),
+				results_from_strat(to_test[2], 2, games, turn)
+			),player), to_test[player]});
 	}
 
 	// keep best pop
@@ -366,14 +373,13 @@ int main()
 	games[2].type = Skater;
 	games[3].type = Diving;
 	// game loop
-	Genome strategies[3][POP_ME]; // my strats
+	Strat strategies[3][POP_ME]; // my strats
 	for (int i = 0; i < POP_ME - 2; i++) { // last 2 get erased by runner and diver
-		strategies[player_idx][i].first = (rand() ^ (rand() << 1));
+		strategies[player_idx][i] = (rand() ^ (rand() << 1));
 	}
 	for (int i = 0; i < POP_OPP; i++) {
-		//on turn 0 everyone is equal, fine to copy MiniGamesResults
-		strategies[opp1_index][i].first = strategies[player_idx][i].first;
-		strategies[opp2_index][i].first = strategies[player_idx][i].first;
+		strategies[opp1_index][i] = strategies[player_idx][i];
+		strategies[opp2_index][i] = strategies[player_idx][i];
 	}
 	int glob_scores[3];
 	int turn = 0;
@@ -392,28 +398,16 @@ int main()
 		auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(time_now - time_start);
 		for (int i = 0; i < 4; i++)
 		games[i].update_state();
-		//recalculate intermediary results that changed because of the update
-		for (int i = 0; i < POP_ME; i++) {
-			strategies[player_idx][i] = genome_from_strat(strategies[player_idx][i].first , player_idx, games, 0);
-		}
-		for (int i = 0; i < POP_OPP; i++) {
-			//on turn 0 everyone is equal, fine to copy MiniGamesResults
-			strategies[opp1_index][i] = genome_from_strat(strategies[opp1_index][i].first, opp1_index, games, 0);
-			strategies[opp2_index][i] = genome_from_strat(strategies[opp2_index][i].first, opp2_index, games, 0);
-		}
 		if (games[3].gpu != "GAME_OVER") {
 			Strat optimal_dive = optimal_diving(games[3].gpu);
-			strategies[player_idx][POP_ME - 1] = genome_from_strat(optimal_dive, player_idx, games, turn);
-			strategies[opp1_index][POP_OPP- 1] = genome_from_strat(optimal_dive, opp1_index, games, turn);
-			strategies[opp2_index][POP_OPP- 1] = genome_from_strat(optimal_dive, opp2_index, games, turn);
+			strategies[player_idx][POP_ME - 1] = optimal_dive;
+			strategies[opp1_index][POP_OPP- 1] = optimal_dive;
+			strategies[opp2_index][POP_OPP- 1] = optimal_dive;
 		}
 		if (games[0].gpu != "GAME_OVER") {
-			strategies[player_idx][POP_ME - 2] = genome_from_strat(optimal_runner(games[0].gpu, games[0].regs[player_idx], games[0].regs[player_idx + 3]),
-				player_idx, games, turn);
-			strategies[opp1_index][POP_OPP- 2] = genome_from_strat(optimal_runner(games[0].gpu, games[0].regs[opp1_index], games[0].regs[opp1_index + 3]),
-				opp1_index, games, turn);
-			strategies[opp2_index][POP_OPP- 2] = genome_from_strat(optimal_runner(games[0].gpu, games[0].regs[opp2_index], games[0].regs[opp2_index + 3]),
-				opp2_index, games, turn);
+			strategies[player_idx][POP_ME - 2] = optimal_runner(games[0].gpu, games[0].regs[player_idx], games[0].regs[player_idx + 3]);
+			strategies[opp1_index][POP_OPP- 2] = optimal_runner(games[0].gpu, games[0].regs[opp1_index], games[0].regs[opp1_index + 3]);
+			strategies[opp2_index][POP_OPP- 2] = optimal_runner(games[0].gpu, games[0].regs[opp2_index], games[0].regs[opp2_index + 3]);
 		}
 		if (turn == 0)
 			dump_turn1(player_idx, nb_games, glob_scores, games);
@@ -438,14 +432,18 @@ int main()
 		}
 		*/
 		std::cerr << "Did " << cycle << " cycles (" << cycle / 3 <<" generations)" << std::endl;
-		cout << KeyStrs[strategies[player_idx][0].first & 3] << endl;
+		std::cerr << "Total of " << partial_resuts[0].size() + partial_resuts[1].size() + partial_resuts[2].size() << " Partial results in memory" << std::endl;
+		cout << KeyStrs[strategies[player_idx][0] & 3] << endl;
 		std::cerr << "Took " << millis.count() << "ms" << std::endl;
 
 		for (int i = 0; i < 3; i++) {
 			for (int j = 0; j < (i==player_idx?POP_ME:POP_OPP); j++) {
-				strategies[i][j].first >>= 2;
+				strategies[i][j] >>= 2;
 			}
 		}
+		partial_resuts[0].clear();
+		partial_resuts[1].clear();
+		partial_resuts[2].clear();
 		turn++;
 	}
 }
