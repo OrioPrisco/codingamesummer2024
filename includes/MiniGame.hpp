@@ -8,9 +8,9 @@
 #include <climits>
 
 struct Medals {
-	uint8_t gold = 0;
-	uint8_t silver = 0;
-	uint8_t bronze = 0;
+	int gold = 0;
+	int silver = 0;
+	int bronze = 0;
 };
 
 
