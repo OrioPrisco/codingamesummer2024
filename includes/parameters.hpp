@@ -36,17 +36,23 @@ struct MiniGamesResults {
 
 typedef uint32_t Strat;
 #define MOVE_PER_STRAT 16
-#include <utility>
+#include <memory>
 typedef std::pair<Strat, MiniGamesResults> Genome;
+
+
 
 #include <memory>
 namespace std {
 	template <>
 	struct hash<Genome> {
-		size_t operator()(const Genome& g) {
+		size_t operator()(const Genome& g) const {
 			return hash<Strat>()(g.first);
 		}
 	};
+	template<>
+	bool operator==(const Genome& a, const Genome& b) {
+		return a.first == b.first;
+	}
 }
 
 //turn at which the game ends

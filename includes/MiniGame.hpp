@@ -8,10 +8,11 @@
 #include <climits>
 
 struct Medals {
-	int gold = 0;
-	int silver = 0;
-	int bronze = 0;
+	uint8_t gold = 0;
+	uint8_t silver = 0;
+	uint8_t bronze = 0;
 };
+
 
 
 std::ostream& operator<<(std::ostream& o, const Medals& medals) {
@@ -167,7 +168,7 @@ public:
 		for(uint8_t i = 0; i < MOVE_PER_STRAT && turn + i < MAX_TURN; ++i) {
 			if (runnerDoPlayer(pos, stun, (Key)(strat & 3))) {
 				res.runner_turn = i;
-				res.runner_positions[i] = pos;
+				res.runner_positions[i] = FIELD_SIZE;
 				return ;
 			}
 			strat >>= 2;
@@ -196,7 +197,7 @@ public:
 			risk += 2;
 		}
 	}
-	void skaterDoPlayer2(int& risk, bool shares_space) {
+	static void skaterDoPlayer2(int& risk, bool shares_space) {
 		if (risk < 0)
 		{
 			risk++;
@@ -514,12 +515,12 @@ public:
 			((double)regs[2] + regs[5]*0.1)/10,
 		};
 	}
-	Evaluation evaluate() const {
+	Evaluation evaluate(bool medals_only = false) const {
 		Evaluation scores;
 		scores[0] = std::max<double>(medals[0].silver + medals[0].gold * 3, 0.01);
 		scores[1] = std::max<double>(medals[1].silver + medals[1].gold * 3, 0.01);
 		scores[2] = std::max<double>(medals[2].silver + medals[2].gold * 3, 0.01);
-		if (gpu[0] == 'G')
+		if (gpu[0] == 'G' || medals_only)
 			return scores;
 		Evaluation partial_scores;
 		switch(type) {

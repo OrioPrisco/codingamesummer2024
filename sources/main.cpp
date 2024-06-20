@@ -37,7 +37,125 @@ Genome genome_from_strat(Strat strat, int player, const MiniGame (&games)[4], in
 	games[3].divingDoTurns(out.second, strat, player, turn);
 	return (out);
 }
-//TODO: add evaluate(Genome (&genes[3]))
+
+void medals(MiniGame::Evaluation& out, const int (&scores)[3]) {
+	int sec_max = 0;
+	int max = INT_MIN;
+	for (int i = 0; i < 3; i++) {
+		if (scores[i] >= max) {
+			sec_max = max;
+			max = scores[i];
+		} else if (scores[i] > sec_max) {
+			sec_max = scores[i];
+		}
+	}
+	for (int i = 0; i < 3; i++)
+	{
+		if (scores[i] == max) {
+			out[i] += 3;
+		} else if (scores[i] == sec_max) {
+			out[i] += 1;
+		} else {
+			out[i] += 0;
+		}
+	}
+}
+
+MiniGame::Evaluation skaterResultsEvaluate(const MiniGamesResults& r1, const MiniGamesResults& r2, const MiniGamesResults &r3) {
+	bool shares_space[3];
+	int risks[3];
+
+	if (r1.skater_pos % 10 == r2.skater_pos %10) {
+		shares_space[0] = true;
+		shares_space[1] = true;
+	}
+	if (r2.skater_pos % 10 == r3.skater_pos % 10) {
+		shares_space[1] = true;
+		shares_space[2] = true;
+	}
+	if (r3.skater_pos % 10 == r1.skater_pos % 10) {
+		shares_space[2] = true;
+		shares_space[0] = true;
+	}
+	MiniGame::skaterDoPlayer2(risks[0], shares_space[0]);
+	MiniGame::skaterDoPlayer2(risks[1], shares_space[1]);
+	MiniGame::skaterDoPlayer2(risks[2], shares_space[2]);
+	return {
+		r1.skater_pos + (r1.skater_risk>=0?-r1.skater_risk*0.3:r1.skater_risk*2),
+		r2.skater_pos + (r2.skater_risk>=0?-r2.skater_risk*0.3:r2.skater_risk*2),
+		r3.skater_pos + (r3.skater_risk>=0?-r3.skater_risk*0.3:r3.skater_risk*2),
+	};
+}
+
+MiniGame::Evaluation runnerResultsEvaluate(const MiniGamesResults& r1, const MiniGamesResults& r2, const MiniGamesResults &r3) {
+	return {
+		(double)r1.runner_positions[15] - r1.runner_stun * 2,
+		(double)r2.runner_positions[15] - r2.runner_stun * 2,
+		(double)r3.runner_positions[15] - r3.runner_stun * 2,
+	};
+}
+
+void runnerFullResultsEvaluate(MiniGame::Evaluation& eval, const MiniGamesResults& r1, const MiniGamesResults& r2, const MiniGamesResults &r3) {
+	int end_turn = r1.runner_turn;
+	if (end_turn == 0 || end_turn > r2.runner_turn)
+		end_turn = r2.runner_turn;
+	if (end_turn == 0 || end_turn > r3.runner_turn)
+		end_turn = r3.runner_turn;
+	medals(eval, {r1.runner_positions[end_turn], r2.runner_positions[end_turn], r3.runner_positions[end_turn]});
+}
+
+void ResultsEvaluate(MiniGame::Evaluation& eval, const MiniGamesResults& r1, const MiniGamesResults& r2, const MiniGamesResults& r3, Type type) {
+	if (type == Diving) {
+		if (r1.diving_score == -1)
+			return;
+		return medals(eval, {r1.diving_score, r2.diving_score, r3.diving_score});
+	} else if (type == Archery) {
+		if (r1.archery_distance2 == -1)
+			return;
+		return medals(eval, {r1.archery_distance2, r2.archery_distance2, r3.archery_distance2});
+	}
+	MiniGame::Evaluation partial_scores;
+	if (type == Skater) {
+		if (r1.skater_pos == -1)
+			return;
+		if (r1.skater_done)
+			return medals(eval, {(int)r1.skater_pos, (int)r2.skater_pos, (int)r3.skater_pos});
+		partial_scores = skaterResultsEvaluate(r1, r2, r3);
+	}
+	else if (type == Runner) {
+		if (r1.runner_turn > 0 || r2.runner_turn > 0 || r3.runner_turn > 0)
+			return runnerFullResultsEvaluate(eval, r1, r2, r3);
+		partial_scores = runnerResultsEvaluate(r1, r2, r3);
+	} else {
+		throw std::runtime_error("unknwon type");
+	}
+	int positions[3];
+	positions[0] = (partial_scores[0] >= partial_scores[1]) + (partial_scores[0] >= partial_scores[2]);
+	positions[1] = (partial_scores[1] >= partial_scores[0]) + (partial_scores[1] >= partial_scores[2]);
+	positions[2] = (partial_scores[2] >= partial_scores[0]) + (partial_scores[2] >= partial_scores[1]);
+	eval[0] += ((double) positions[0]) /2;
+	eval[1] += ((double) positions[1]) /2;
+	eval[2] += ((double) positions[2]) /2;
+}
+
+MiniGame::Evaluation eval_strat(const MiniGame (&games)[4], const MiniGamesResults& r1, const MiniGamesResults& r2, const MiniGamesResults& r3) {
+	MiniGame::Evaluation scores[4];
+	scores[0] = games[0].evaluate(true); //get Medal scores
+	scores[1] = games[1].evaluate(true);
+	scores[2] = games[2].evaluate(true);
+	scores[3] = games[3].evaluate(true);
+
+	ResultsEvaluate(scores[0], r1, r2, r3, Runner);
+	ResultsEvaluate(scores[1], r1, r2, r3, Archery);
+	ResultsEvaluate(scores[2], r1, r2, r3, Skater);
+	ResultsEvaluate(scores[3], r1, r2, r3, Diving);
+
+	MiniGame::Evaluation total_score;
+	total_score[0] = scores[0][0] * scores[1][0] * scores[2][0] * scores[3][0];
+	total_score[1] = scores[0][1] * scores[1][1] * scores[2][1] * scores[3][1];
+	total_score[2] = scores[0][2] * scores[1][2] * scores[2][2] * scores[3][2];
+	return total_score;
+}
 
 MiniGame::Evaluation eval_strat(const MiniGame (&games)[4], Strat p1, Strat p2, Strat p3, int turn) {
 	MiniGame games_cpy[4];
@@ -128,7 +246,7 @@ size_t get_tournament_idx(size_t population_size) {
 		size_t competitor_idx = rand() % population_size;
 		if (competitor_idx == parent_idx)
 			continue;
-		if (competitor_idx > parent_idx)
+		if (competitor_idx < parent_idx)
 			parent_idx = competitor_idx;
 		i++;
 	}
@@ -168,7 +286,7 @@ void evolve_strats(const MiniGame (&games)[4], Genomes (&genes)[3] , int player,
 	to_test[2] = genes[2][0];
 	for (Genome gene : population) {
 		to_test[player] = gene;
-		ranked_strats.insert({eval_of_player(eval_strat(games, to_test[0], to_test[1], to_test[2], turn), player), to_test[player]});
+		ranked_strats.insert({eval_of_player(eval_strat(games, to_test[0].second, to_test[1].second, to_test[2].second), player), to_test[player]});
 	}
 
 	// keep best pop
