@@ -397,7 +397,7 @@ int main()
 		auto time_now = time_start;
 		auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(time_now - time_start);
 		for (int i = 0; i < 4; i++)
-		games[i].update_state();
+			games[i].update_state();
 		if (games[3].gpu != "GAME_OVER") {
 			Strat optimal_dive = optimal_diving(games[3].gpu);
 			strategies[player_idx][POP_ME - 1] = optimal_dive;
