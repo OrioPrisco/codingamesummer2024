@@ -283,17 +283,17 @@ void evolve_strats(const MiniGame (&games)[4], Strats (&genes)[3] , int player, 
 		population.insert(babies.second);
 	}
 	//evaluate all deduplicated strats
-	Strat to_test[3];
-	to_test[0] = genes[0][0];
-	to_test[1] = genes[1][0];
-	to_test[2] = genes[2][0];
+	MiniGamesResults to_test[3];
+	to_test[0] = results_from_strat(genes[0][0], 0, games, turn);
+	to_test[1] = results_from_strat(genes[1][0], 1, games, turn);
+	to_test[2] = results_from_strat(genes[2][0], 2, games, turn);
 	for (Strat gene : population) {
-		to_test[player] = gene;
+		to_test[player] = results_from_strat(gene, player, games, turn);
 		ranked_strats.insert({eval_of_player(eval_strat(games,
-				results_from_strat(to_test[0], 0, games, turn),
-				results_from_strat(to_test[1], 1, games, turn),
-				results_from_strat(to_test[2], 2, games, turn)
-			),player), to_test[player]});
+				to_test[0],
+				to_test[1],
+				to_test[2]
+			),player), gene});
 	}
 
 	// keep best pop
