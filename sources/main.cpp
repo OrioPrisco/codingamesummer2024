@@ -251,7 +251,7 @@ size_t get_tournament_idx(size_t population_size) {
 		size_t competitor_idx = rand() % population_size;
 		if (competitor_idx == parent_idx)
 			continue;
-		if (competitor_idx > parent_idx)
+		if (competitor_idx < parent_idx)
 			parent_idx = competitor_idx;
 		i++;
 	}
