@@ -10,12 +10,12 @@
 
 using namespace std;
 
-MiniGame::Evaluation evaluate(const MiniGame (&games)[4]) {
+MiniGame::Evaluation evaluate(const MiniGame (&games)[4], int turn) {
 	MiniGame::Evaluation scores[4];
-	scores[0] = games[0].evaluate();
-	scores[1] = games[1].evaluate();
-	scores[2] = games[2].evaluate();
-	scores[3] = games[3].evaluate();
+	scores[0] = games[0].evaluate(turn);
+	scores[1] = games[1].evaluate(turn);
+	scores[2] = games[2].evaluate(turn);
+	scores[3] = games[3].evaluate(turn);
 	MiniGame::Evaluation total_score;
 	total_score[0] = scores[0][0] * scores[1][0] * scores[2][0] * scores[3][0];
 	total_score[1] = scores[0][1] * scores[1][1] * scores[2][1] * scores[3][1];
@@ -40,7 +40,7 @@ MiniGame::Evaluation eval_strat(const MiniGame (&games)[4], Strat p1, Strat p2, 
 	games_cpy[1].archeryDoTurns(strats, turn);
 	games_cpy[2].skaterDoTurns(strats, turn);
 	games_cpy[3].divingDoTurns(strats, turn);
-	return evaluate(games_cpy);
+	return evaluate(games_cpy, turn);
 }
 
 Strat mutate_strat(Strat keys, uint8_t bits_to_flip) {
