@@ -117,7 +117,7 @@ void ResultsEvaluate(MiniGame::Evaluation& eval, const MiniGamesResults& r1, con
 	} else if (type == Archery) {
 		if (r1.archery_distance2 == -1)
 			return;
-		return medals(eval, {r1.archery_distance2, r2.archery_distance2, r3.archery_distance2});
+		return medals(eval, {-r1.archery_distance2, -r2.archery_distance2, -r3.archery_distance2});
 	}
 	MiniGame::Evaluation partial_scores;
 	if (type == Skater) {
