@@ -138,6 +138,7 @@ public:
 		Strat p2 = inputs[1];
 		Strat p3 = inputs[2];
 		for(uint8_t i = 0; i < MOVE_PER_STRAT && turn + i < MAX_TURN; ++i) {
+			simulated_turns++;
 			done |= runnerDoPlayer(regs[0], regs[3], (Key)(p1 & 3));
 			done |= runnerDoPlayer(regs[1], regs[4], (Key)(p2 & 3));
 			done |= runnerDoPlayer(regs[2], regs[5], (Key)(p3 & 3));
@@ -228,6 +229,7 @@ public:
 			gpu = "GAME_OVER";// makes evaluation ignore partial score
 			return;
 		}
+		simulated_turns++;
 		Key keys[3] = { (Key)(inputs[0] & 3), (Key)(inputs[1] & 3), (Key)(inputs[2] & 3)};
 		skaterDoTurn(keys);
 	}
@@ -279,6 +281,7 @@ public:
 		Strat p2 = inputs[1];
 		Strat p3 = inputs[2];
 		for(uint8_t i = 0; i < MOVE_PER_STRAT && turn + i < MAX_TURN; ++i) {
+			simulated_turns++;
 			archeryDoPlayer(regs[0], regs[1], (Key)(p1 & 3));
 			archeryDoPlayer(regs[2], regs[3], (Key)(p2 & 3));
 			archeryDoPlayer(regs[4], regs[5], (Key)(p3 & 3));
@@ -331,6 +334,7 @@ public:
 			divingDoPlayer(regs[0], regs[3], (Key)(p1 & 3));
 			divingDoPlayer(regs[1], regs[4], (Key)(p2 & 3));
 			divingDoPlayer(regs[2], regs[5], (Key)(p3 & 3));
+			simulated_turns++;
 			gpu.erase(0, 1); // remove first char
 			if (gpu.empty()) {
 				gpu = "GAME_OVER";
@@ -459,9 +463,9 @@ public:
 	}
 	Evaluation evaluate(int turn) const {
 		Evaluation scores;
-		scores[0] = medals[0].silver + medals[0].gold * 3 + (turn < 50 ? (50 - turn)/10:0);
-		scores[1] = medals[1].silver + medals[1].gold * 3 + (turn < 50 ? (50 - turn)/10:0);
-		scores[2] = medals[2].silver + medals[2].gold * 3 + (turn < 50 ? (50 - turn)/10:0);
+		scores[0] = std::max<double>(medals[0].silver + medals[0].gold * 3 + (turn < 50 ? (50 - turn)/10:0) - ((double)(simulated_turns - 3) / 15), 0.01);
+		scores[1] = std::max<double>(medals[1].silver + medals[1].gold * 3 + (turn < 50 ? (50 - turn)/10:0) - ((double)(simulated_turns - 3) / 15), 0.01);
+		scores[2] = std::max<double>(medals[2].silver + medals[2].gold * 3 + (turn < 50 ? (50 - turn)/10:0) - ((double)(simulated_turns - 3) / 15), 0.01);
 		if (gpu[0] == 'G')
 			return scores;
 		Evaluation partial_scores;
